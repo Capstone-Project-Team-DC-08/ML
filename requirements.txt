@@ -1,0 +1,15 @@
+pandas
+numpy
+openpyxl
+scikit-learn
+jupyter
+notebook
+matplotlib
+seaborn
+fastapi
+uvicorn
+joblib
+requests
+pydantic
+python-dotenv
+google-generativeai

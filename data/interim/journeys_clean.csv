@@ -1,0 +1,177 @@
+id,name,difficulty,hours_to_study,point,xp,created_at
+14,Belajar Fundamental Aplikasi Android,2,140,0,2200,2016-09-21 00:48:38
+51,Belajar Membuat Aplikasi Android untuk Pemula,1,60,0,400,2017-09-05 19:56:12
+80,Memulai Pemrograman dengan Kotlin,0,50,0,400,2018-08-01 09:55:22
+86,Memulai Pemrograman dengan Python,0,60,0,879,2018-08-13 09:47:35
+123,Belajar Dasar Pemrograman Web,0,45,0,400,2019-04-15 15:02:41
+133,Menjadi Google Cloud Engineer,2,42,0,1100,2019-05-28 13:42:59
+145,Memulai Pemrograman Dengan Swift,0,40,0,400,2019-09-10 13:36:33
+159,Belajar Membuat Aplikasi Flutter untuk Pemula,0,40,0,400,2020-01-16 16:34:08
+163,Belajar Fundamental Front-End Web Development,0,80,0,400,2020-01-31 10:02:09
+165,Menjadi Android Developer Expert,0,90,0,1100,2020-02-10 09:47:25
+171,Belajar Membuat Aplikasi iOS untuk Pemula,0,40,0,400,2020-03-11 14:39:25
+177,Belajar Dasar Visualisasi Data,0,16,0,400,2020-03-19 12:05:58
+184,Belajar Machine Learning untuk Pemula,0,90,0,1199,2020-03-19 12:08:12
+185,Belajar Fundamental Deep Learning,0,110,0,3279,2020-03-19 13:34:07
+191,Memulai Pemrograman dengan Dart,0,30,0,400,2020-03-19 13:36:15
+195,Belajar Fundamental Aplikasi Flutter,0,90,0,2200,2020-03-19 13:40:06
+199,Menjadi Flutter Developer Expert,0,85,0,1100,2020-03-19 13:41:34
+202,Belajar Fundamental Aplikasi iOS,0,70,0,2200,2020-03-19 14:09:49
+209,Menjadi iOS Developer Expert,0,70,0,1100,2020-03-19 14:11:16
+219,Belajar Pengembangan Web Intermediate,0,80,0,1100,2020-03-23 22:56:28
+251,Belajar Dasar Cloud dan Gen AI di AWS,0,18,0,879,2020-12-08 14:58:50
+256,Belajar Dasar Pemrograman JavaScript,0,46,0,879,2020-12-08 15:32:27
+261,Belajar Back-End Pemula dengan JavaScript,0,50,0,879,2020-12-08 15:34:23
+266,Architecting on AWS (Membangun Arsitektur Cloud di AWS),0,40,0,1119,2020-12-08 15:35:42
+271,Belajar Fundamental Back-End dengan JavaScript,0,90,0,2229,2020-12-08 15:36:35
+276,Menjadi Back-End Developer Expert dengan JavaScript,0,82,0,3279,2020-12-08 15:37:36
+281,Simulasi Ujian Associate Cloud Engineer,0,25,0,0,2020-12-28 12:38:15
+292,Meniti Karier sebagai Software Developer,0,7,0,400,2021-01-19 15:49:46
+302,Pengenalan ke Logika Pemrograman (Programming Logic 101),0,6,0,400,2021-01-25 10:54:00
+315,Belajar Membuat Front-End Web untuk Pemula,0,45,0,400,2021-04-12 10:21:26
+317,Belajar Dasar Git dengan GitHub,0,15,0,400,2021-04-29 11:33:12
+319,Machine Learning Terapan,0,80,0,3279,2021-04-29 11:44:41
+332,Menjadi Google Cloud Architect,0,35,0,2229,2021-07-12 11:27:31
+335,Belajar Dasar UX Design,0,36,0,400,2021-07-21 16:29:03
+337,Belajar Dasar Google Cloud,0,12,0,879,2021-08-27 10:58:10
+342,Belajar Membuat Aplikasi Back-End untuk Pemula dengan Google Cloud,0,45,0,879,2021-10-07 11:49:00
+352,Belajar Pengembangan Aplikasi Android Intermediate,0,150,0,3279,2021-10-18 09:25:53
+382,Belajar Dasar-Dasar DevOps,0,15,0,679,2021-12-29 13:20:02
+387,Belajar Jaringan Komputer untuk Pemula,0,25,0,879,2021-12-30 13:02:32
+403,Belajar Membuat Aplikasi Web dengan React,0,35,0,879,2022-03-07 10:44:51
+413,Belajar Fundamental Aplikasi Web dengan React,0,55,0,2229,2022-05-10 09:31:04
+418,Menjadi React Web Developer Expert,0,70,0,3279,2022-05-10 09:33:16
+423,Menjadi Linux System Administrator,0,25,0,2229,2022-05-17 09:20:59
+428,Belajar Implementasi CI/CD,0,30,0,2229,2022-05-17 09:23:14
+433,Belajar Membangun Arsitektur Microservices,0,60,0,3279,2022-05-17 09:25:02
+443,Machine Learning Operations (MLOps),0,80,0,3279,2022-05-30 09:42:23
+445,Belajar Membuat Aplikasi Android dengan Jetpack Compose,0,50,0,3279,2022-07-18 10:47:47
+480,Belajar Pengembangan Aplikasi Flutter Intermediate,0,80,0,3279,2022-08-03 11:51:37
+555,Belajar Analisis Data dengan Python,0,70,0,1119,2022-12-27 16:41:22
+565,Belajar Toolset untuk Pengembangan Front-End Web,0,65,0,3279,2023-01-10 16:53:05
+580,Belajar Pemrograman Fungsional dengan Haskell,0,20,0,879,2023-03-13 11:42:48
+590,Belajar Penerapan Data Science,0,110,0,3279,2023-04-13 11:17:08
+600,Belajar Dasar Structured Query Language (SQL),0,11,0,879,2023-04-18 08:19:40
+610,Menjadi Node.js Application Developer,0,57,0,1119,2023-06-05 12:01:03
+615,Belajar Dasar Data Science,0,11,0,679,2023-06-15 09:40:34
+620,Belajar Pemrograman Prosedural dengan Python,0,33,0,879,2023-06-15 10:20:51
+653,Belajar Dasar AI,0,10,0,879,2023-09-21 11:52:01
+658,Belajar Penerapan Machine Learning dengan Google Cloud,0,40,0,2229,2023-09-21 11:53:42
+663,Belajar Penerapan Machine Learning untuk Android,0,60,0,3279,2023-09-21 13:47:53
+697,Belajar Strategi Pengembangan Diri,0,12,0,879,2024-06-12 15:43:04
+698,Dev Certification for Machine Learning with Tensorflow (DCML) Preparation,0,25,0,0,2024-07-22 16:41:01
+703,Dev Certification for Android (DCA) Preparation,0,40,0,0,2024-07-24 13:43:44
+708,Belajar Fundamental Pemrosesan Data,0,70,0,2229,2024-08-27 10:41:38
+713,Membangun Sistem Machine Learning,0,90,0,2229,2024-08-27 10:53:24
+743,Belajar Back-End Pemula dengan Python,0,40,0,879,2024-10-04 09:08:02
+753,Prompt Engineering untuk Software Developer,0,16,0,679,2024-10-30 08:51:45
+758,Belajar Penerapan Machine Learning untuk Flutter,0,60,0,2200,2024-10-30 08:54:55
+788,Belajar Fundamental Back-End dengan Python,0,65,0,2229,2024-12-16 13:54:42
+818,Membangun Proyek Deep Learning Tingkat Mahir,0,90,0,3279,2024-12-24 08:09:11
+831,Belajar Matematika untuk Data Science,0,70,0,2222,2025-01-28 14:30:19
+862,AI Praktis untuk Produktivitas,0,20,0,679,2025-03-24 11:33:17
+867,Belajar Penggunaan Generative AI,0,30,0,679,2025-03-24 11:34:19
+899,Membangun Aplikasi Gen AI dengan Microsoft Azure,0,8,0,1119,2025-10-08 10:10:18
+902,Belajar Penerapan Data Science dengan Microsoft Fabric,0,6,0,1119,2025-10-08 10:13:01
+2,Belajar Membangun Aplikasi Android Native Bagian I,0,0,200,200,2015-07-30 09:09:34
+4,Belajar Mengintegrasikan Android NDK pada Aplikasi/Game Android,1,0,200,200,2015-07-31 12:43:29
+5,Belajar Membangun Aplikasi Android Native Bagian II,1,0,200,200,2015-07-31 15:30:17
+6,Belajar Membangun Aplikasi Android HTML5,0,0,200,200,2015-08-24 19:53:42
+7,Belajar Membuat Aplikasi Android dengan MIT AppInventor 2,0,0,25,50,2015-12-14 20:29:09
+9,Belajar Membangun Game Multi Platform,1,0,200,200,2016-01-30 05:47:35
+11,Belajar Membangun Solusi IoT dengan Intel Galileo,1,0,300,300,2016-03-22 07:21:41
+12,Belajar Membangun Game Android HTML5,0,0,200,200,2016-05-12 02:11:08
+15,Belajar Membangun Aplikasi Android dengan IBM Bluemix,0,0,200,200,2016-11-10 21:23:41
+16,Belajar Membangun Game HTML5,0,0,400,400,2016-11-10 21:25:22
+20,Belajar Membangun Aplikasi Multi-platform,1,0,0,400,2016-12-05 09:50:51
+26,Belajar Membangun Aplikasi Android Native,0,0,200,400,2017-01-04 12:51:27
+32,Belajar Membangun LINE Chatbot,1,20,0,400,2017-02-01 09:10:43
+37,Samsung Galaxy SDK,1,0,400,400,2017-02-19 22:48:06
+39,Belajar Membangun Game 2D dan 3D dengan Unity,0,0,400,400,2017-03-06 17:34:25
+44,Belajar Membuat Aplikasi Kognitif dengan IBM Watson,1,0,0,400,2017-03-15 17:48:15
+47,Menjadi Game Developer Expert,2,140,0,2200,2017-09-01 14:51:25
+55,Kotlin Android Developer Expert,2,70,0,1100,2018-01-19 09:11:10
+58,Belajar Membuat Game untuk Pemula,1,40,0,400,2018-02-08 17:43:35
+60,Memulai Pemrograman Dengan Java,0,15,0,400,2018-04-17 18:08:22
+65,Belajar Membuat Game dengan Construct 2,1,40,0,0,2018-05-17 11:00:14
+68,Belajar Membuat Aplikasi Kognitif,1,15,0,400,2018-05-17 11:05:50
+72,Belajar Membangun Prototype Chatbot Dengan LINE Bot Designer,0,0,0,400,2018-07-05 11:50:48
+74,Membangun Progressive Web Apps,2,70,0,1100,2018-07-27 09:27:03
+83,Menjadi Azure Cloud Developer,2,40,0,1100,2018-08-13 09:46:47
+92,Pengantar Teknologi Blockchain,1,0,0,0,2018-08-16 10:39:25
+95,Menjadi Construct 2 Developer Expert,2,70,0,1100,2018-10-29 11:08:44
+104,Menjadi AWS Solutions Architect Associate,2,40,0,400,2018-11-15 12:46:54
+110,Menjadi Flutter Developer Expert (2019),2,0,0,1650,2018-12-13 13:59:01
+116,Source Code Management untuk Pemula,1,10,0,0,2019-01-16 19:47:51
+120,Memulai Pemrograman Dengan C,0,15,0,400,2019-03-18 15:08:50
+129,Belajar Android Jetpack Pro,3,70,0,1100,2019-05-15 11:46:50
+135,Belajar Membuat Augmented Reality,0,40,0,400,2019-08-14 17:39:45
+144,Belajar Dasar-Dasar Azure Cloud,0,40,0,400,2019-09-09 16:08:26
+150,Belajar Membuat Virtual Reality,0,40,0,400,2019-10-21 13:23:06
+153,Belajar Membangun LINE Front-end Framework (LIFF),0,15,0,400,2019-10-23 11:21:04
+155,Belajar Membuat Mixed Reality,0,40,0,0,2020-01-05 21:24:52
+169,Belajar Prinsip Pemrograman SOLID,0,15,0,400,2020-03-04 18:56:17
+237,Memulai Dasar Pemrograman untuk Menjadi Pengembang Software,0,9,0,400,2020-10-12 08:54:24
+246,Bangkit Application Screening 2021,0,2,0,0,2020-11-10 14:59:26
+287,Simulasi Ujian Associate Android Developer,0,40,0,0,2021-01-18 10:21:17
+297,Pengenalan Data pada Pemrograman (Data 101),0,6,0,400,2021-01-25 10:41:38
+307,DevOps Praktis dengan IBM Cloud (Practical DevOps with IBM Cloud),0,35,0,2229,2021-01-25 11:11:41
+312,Simulasi Ujian TensorFlow Developer Certificate,0,25,0,0,2021-02-26 08:58:40
+313,Belajar Membuat Augmented Reality dengan Lens Studio,0,20,0,879,2021-03-23 08:57:29
+322,Tes Seleksi Offline Training - AI Connect Academy,0,30,0,0,2021-06-28 11:51:27
+327,Evaluasi Penguasaan Machine Learning,0,15,0,400,2021-07-07 10:59:20
+357,Bangkit General Assessment 2022,0,2,0,0,2021-10-19 17:26:23
+362,Bangkit Machine Learning Assessment 2024 Batch 2,0,2,0,0,2021-10-19 17:30:24
+367,Bangkit Android Assessment 2024 Batch 2,0,2,0,0,2021-10-19 17:41:54
+372,Bangkit Cloud Assessment 2024 Batch 2,0,2,0,0,2021-10-19 17:44:57
+392,Bangkit 2024 ILT Quiz - Machine Learning,0,1,0,0,2022-01-17 10:10:39
+397,Bangkit 2024 ILT Quiz - Mobile Development,0,1,0,0,2022-01-17 10:25:57
+402,Bangkit 2024 ILT Quiz - Cloud Computing,0,1,0,0,2022-01-17 10:26:01
+408,Belajar Membuat Website untuk Menjadi Desainer Website,0,13,0,500,2022-04-20 13:29:05
+455,Asah 2025 - Kuis ILT FEBE AI,0,1,0,0,2022-07-28 16:39:12
+465,SIB 3 ILT Quiz Machine Learning - Front End,0,10,0,0,2022-07-28 16:40:36
+475,Asah 2025 - Kuis ILT Soft Skill,0,1,0,0,2022-07-28 16:42:24
+485,BDT 2022 (Tahap 2) Pre-Test Android Developer Dasar,0,2,0,0,2022-08-10 15:07:03
+490,BDT 2022 (Tahap 2) Pre-Test Machine Learning Dasar,0,2,0,0,2022-08-10 15:08:00
+495,BDT 2022 (Tahap 2) Pre-Test IT Support,0,1,0,0,2022-08-10 15:08:50
+500,BDT 2022 (Tahap 2) Pre-Test Analisis Data,0,2,0,0,2022-08-10 15:09:45
+505,Simulasi Ujian Pendidik Level 1 (Google Certified Educator Level 1 - Indonesian),0,19,0,0,2022-08-26 13:41:26
+510,Belajar Membuat Aplikasi Back-End untuk Pemula dengan Cloudeka,0,45,0,879,2022-09-08 13:40:38
+515,Belajar Dasar DevOps Bagi Insinyur Operasi Pengembang Pemula,0,15,0,679,2022-09-19 13:26:54
+520,Belajar Mengembangkan Website dengan HTML dan CSS Bagi Pengembang Web Pemula,0,15,0,879,2022-09-19 13:28:08
+525,Memulai Dasar Pemrograman Bagi Pengembang Perangkat Lunak Pemula,0,15,0,679,2022-09-19 13:29:44
+530,Bangkit General Assessment 2023,0,2,0,0,2022-10-06 21:28:27
+535,Belajar Dasar Desain UX bagi Desainer UI/UX Pemula,0,23,0,499,2022-10-18 08:50:33
+540,Tes Seleksi Asah 2025 – FEBE AI dan REBE AI,0,4,0,0,2022-11-11 13:23:11
+545,Simulasi Ujian Pendidik Level 2 (Google Certified Educator Level 2 - Indonesian),0,19,0,0,2022-11-22 16:24:26
+550,Simulasi Ujian Penilaian Keterampilan Pelatih (Trainer Skills Assessment - Indonesian),0,10,0,0,2022-11-22 16:26:08
+570,Belajar Dasar Manajemen Proyek,0,11,0,679,2023-01-24 09:27:29
+575,Bangkit 2024 ILT Quiz - Soft Skill,0,1,0,0,2023-02-01 10:12:43
+595,Exam Challenge Campaign Hari Pendidikan,0,5,0,0,2023-04-13 11:33:36
+605,Memulai Pemrograman dengan Haskell,0,20,0,879,2023-04-27 16:44:08
+625,Pre-Test Dicoding Bootcamp,0,2,0,0,2023-06-21 10:03:18
+645,SIB 5 ILT Quiz Full Stack,0,1,0,0,2023-07-12 14:53:31
+668,Machine Learning Operations (MLOps) dengan Cloudeka,0,45,0,3279,2023-10-31 13:52:02
+673,Tes Seleksi BEKUP Create: Upskilling Bootcamp 2025 - Multi-Platform App Developer (Flutter),0,2,0,0,2024-01-15 16:39:48
+678,Asah 2025 - Kuis ILT REBE AI,0,1,0,0,2024-01-23 13:32:01
+688,BDT 2024 Web Development Bootcamp ILT Quiz - Front End dan Back End ,0,1,0,0,2024-01-23 14:06:04
+693,BDT 2024 Web Development Bootcamp ILT Quiz - Soft Skill,0,1,0,0,2024-01-23 14:09:30
+718,Belajar Strategi Perencanaan Karier,0,20,0,879,2024-08-27 11:22:05
+723,ILT Quiz - Soft Skill,0,1,0,0,2024-09-10 08:41:25
+733,Tes Seleksi Coding Camp powered by DBS Foundation - AI Engineer dan Data Scientist,0,3,0,0,2024-09-23 10:00:09
+738,Tes Seleksi Coding Camp powered by DBS Foundation - Full-Stack Web Developer,0,3,0,0,2024-09-23 10:19:39
+748,Tes Seleksi Laskar AI,0,3,0,0,2024-10-18 16:11:53
+763,Laskar AI 2025 ILT Quiz - Soft Skill,0,1,0,0,2024-12-03 14:35:07
+768,Laskar AI 2025 ILT Quiz - Artificial Intelligence,0,10,0,0,2024-12-03 14:46:01
+778,[SMK] Coding Camp powered by DBS Foundation 2025 ILT Quiz - Soft Skill,0,1,0,0,2024-12-05 11:04:59
+783,[Univ] Coding Camp powered by DBS Foundation 2025 ILT Quiz - Soft Skill,0,1,0,0,2024-12-05 11:08:42
+823,Simulasi Ujian Azure Data Scientist Associate,0,5,0,0,2024-12-31 12:24:20
+828,Simulasi Ujian Azure AI Engineer Associate,0,5,0,0,2025-01-03 16:11:18
+837,ILT Quiz - Flutter,0,1,0,0,2025-03-10 09:46:08
+847,ILT Soft Skill Bootcamp,0,56,0,0,2025-03-12 11:55:43
+852,Financial Literacy 101,0,3,0,0,2025-03-14 12:55:50
+881,Belajar Pemrograman Rust untuk Pemula,0,40,0,879,2025-05-23 16:59:24
+884,Pengenalan NVIDIA AI Enterprise,0,8,0,0,2025-07-16 09:39:50
+887,Tes Seleksi Pijak in collaboration with IBM SkillsBuild,0,4,0,0,2025-08-01 09:56:11
+890,Akselerasi Karier dan Produktivitas dengan Gemini,0,20,0,879,2025-08-13 09:00:47
+905,Introduction to Financial Literacy,0,6,0,0,2025-10-10 16:39:05
