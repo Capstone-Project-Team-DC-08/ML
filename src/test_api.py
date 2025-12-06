@@ -110,12 +110,21 @@ def test_persona_prediction():
     print_header("Test 3: Persona Prediction (Model 1)")
     
     try:
-        # Test data
+        # Test data dengan features lengkap
         payload = {
-            "user_id": 123
+            "user_id": 123,
+            "features": {
+                "avg_study_hour": 21.5,
+                "study_consistency_std": 2.3,
+                "completion_speed": 0.35,
+                "avg_exam_score": 78.5,
+                "submission_fail_rate": 0.15,
+                "retry_count": 1
+            }
         }
         
         print(f"Testing with user_id: {payload['user_id']}")
+        print(f"Features: avg_study_hour={payload['features']['avg_study_hour']}, avg_exam_score={payload['features']['avg_exam_score']}")
         
         response = requests.post(
             f"{API_BASE_URL}/api/v1/persona/predict",
@@ -128,6 +137,8 @@ def test_persona_prediction():
             print_success(f"Persona: {data['persona_label']}")
             print_success(f"Cluster ID: {data['cluster_id']}")
             print_success(f"Confidence: {data['confidence']}")
+            if 'description' in data:
+                print_success(f"Description: {data['description']}")
             print_success(f"Characteristics: {len(data['characteristics'])} items")
             
             print_response(data, "Persona Prediction Response")
@@ -182,12 +193,18 @@ def test_advice_generation():
     print_header("Test 5: Personalized Advice Generation (Model 2)")
     
     try:
+        # Updated payload dengan persona dan pace label
         payload = {
             "user_id": 123,
-            "name": "Budi"
+            "name": "Budi Santoso",
+            "persona_label": "The Night Owl",
+            "pace_label": "fast learner",
+            "avg_exam_score": 78.5,
+            "course_name": "Belajar Machine Learning"
         }
         
         print(f"Testing advice for: {payload['name']} (ID: {payload['user_id']})")
+        print(f"Persona: {payload['persona_label']}, Pace: {payload['pace_label']}")
         print("Note: This may take 1-3 seconds if using Gemini AI...")
         
         response = requests.post(
@@ -227,12 +244,19 @@ def test_pace_analysis():
     print_header("Test 6: Learning Pace Analysis (Model 3)")
     
     try:
+        # Updated payload dengan features
         payload = {
             "user_id": 123,
-            "journey_id": 45
+            "journey_id": 45,
+            "features": {
+                "materials_per_day": 6.5,
+                "weekly_cv": 0.3,
+                "completion_speed": 0.8
+            }
         }
         
         print(f"Testing pace for user {payload['user_id']} on journey {payload['journey_id']}")
+        print(f"Features: materials_per_day={payload['features']['materials_per_day']}")
         
         response = requests.post(
             f"{API_BASE_URL}/api/v1/pace/analyze",
@@ -242,11 +266,23 @@ def test_pace_analysis():
         
         if response.status_code == 200:
             data = response.json()
+            print_success(f"Journey ID: {data.get('journey_id', 'N/A')}")
+            print_success(f"Journey Name: {data.get('journey_name', 'N/A')}")
             print_success(f"Pace Label: {data['pace_label']}")
-            print_success(f"Pace Percentage: {data['pace_percentage']}%")
-            print_success(f"User Duration: {data['user_duration_hours']} hours")
-            print_success(f"Avg Duration: {data['avg_duration_hours']} hours")
-            print_success(f"Percentile Rank: {data['percentile_rank']}")
+            if 'scores' in data and data['scores']:
+                print_success(f"Scores: fast={data['scores'].get('fast_score', 'N/A')}, consistent={data['scores'].get('consistent_score', 'N/A')}")
+            if data.get('pace_percentage') is not None:
+                print_success(f"Pace Percentage: {data['pace_percentage']}%")
+            if data.get('user_duration_hours') is not None:
+                print_success(f"User Duration: {data['user_duration_hours']} hours")
+            if data.get('avg_duration_hours') is not None:
+                print_success(f"Avg Duration: {data['avg_duration_hours']} hours")
+            if data.get('percentile_rank') is not None:
+                print_success(f"Percentile Rank: {data['percentile_rank']}")
+            if 'insight' in data:
+                # Handle emoji for Windows
+                insight = data['insight'].encode('ascii', 'ignore').decode('ascii').strip()
+                print_success(f"Insight: {insight}")
             
             print_response(data, "Pace Analysis Response")
             return True
@@ -274,8 +310,11 @@ def test_pace_summary():
         if response.status_code == 200:
             data = response.json()
             print_success(f"Total Courses: {data['total_courses_completed']}")
-            print_success(f"Overall Pace: {data['overall_pace_label']}")
-            print_success(f"Avg Pace %: {data['average_pace_percentage']}")
+            print_success(f"Dominant Pace: {data.get('dominant_pace_label', 'N/A')}")
+            if 'pace_distribution' in data:
+                print_success(f"Pace Distribution: {data['pace_distribution']}")
+            if 'insight' in data:
+                print_success(f"Insight: {data['insight']}")
             
             print_response(data, "Pace Summary Response")
             return True
