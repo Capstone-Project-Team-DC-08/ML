@@ -4,6 +4,7 @@
 
 [![Python](https://img.shields.io/badge/Python-3.8+-blue.svg)](https://www.python.org/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.104+-green.svg)](https://fastapi.tiangolo.com/)
+[![API Version](https://img.shields.io/badge/API-v1.1.0-brightgreen.svg)](#)
 [![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 ---
@@ -14,9 +15,9 @@
 2. [Fitur Utama](#fitur-utama)
 3. [Arsitektur System](#arsitektur-system)
 4. [Struktur Folder](#struktur-folder)
-5. [Cara Install](#cara-install)
+5. [Quick Start](#quick-start)
 6. [Cara Menggunakan API](#cara-menggunakan-api)
-7. [Untuk Tim Backend](#untuk-tim-backend)
+7. [Backend Integration](#backend-integration)
 8. [Untuk Tim Frontend](#untuk-tim-frontend)
 9. [FAQ](#faq)
 
@@ -24,13 +25,13 @@
 
 ## 🎯 Tentang Project
 
-Project ini adalah sistem Machine Learning untuk **menganalisis pola belajar siswa** di platform pembelajaran online. Sistem ini menggunakan **3 model ML** yang bekerja sama untuk memberikan insight personal kepada setiap siswa.
+Project ini adalah sistem Machine Learning untuk **menganalisis pola belajar siswa** di platform pembelajaran online Dicoding. Sistem ini menggunakan **3 model ML** yang bekerja sama untuk memberikan insight personal kepada setiap siswa.
 
 ### Problem yang Diselesaikan:
 
-1. **Siswa tidak tahu tipe belajar mereka** → Model mengelompokkan ke persona
-2. **Siswa butuh motivasi & saran** → AI generate saran personal
-3. **Siswa tidak tahu progress mereka** → Analisis kecepatan belajar
+1. **Siswa tidak tahu tipe belajar mereka** → Model 1 mengelompokkan ke 5 persona
+2. **Siswa butuh motivasi & saran** → Model 2 generate saran personal dengan AI
+3. **Siswa tidak tahu progress mereka** → Model 3 analisis kecepatan belajar
 
 ### Output untuk Website:
 
@@ -45,15 +46,15 @@ Project ini adalah sistem Machine Learning untuk **menganalisis pola belajar sis
 ### 🎭 Model 1: Persona Clustering
 **"Kamu Tipe Pembelajar Apa?"**
 
-Mengelompokkan siswa ke 5 tipe persona berdasarkan aktivitas belajar:
+Mengelompokkan siswa ke **5 tipe persona** berdasarkan aktivitas belajar:
 
-| Persona | Deskripsi | Karakteristik |
-|---------|-----------|---------------|
-| 🚀 **The Sprinter** | Fast Learner | Cepat selesai, nilai tinggi |
-| 🔍 **The Deep Diver** | Slow but Thorough | Lambat tapi memahami dengan baik |
-| 🦉 **The Night Owl** | Night-time Learner | Aktif belajar malam hari |
-| 💪 **The Struggler** | Need Support | Butuh bantuan ekstra |
-| 📊 **The Consistent** | Steady Learner | Belajar rutin dan teratur |
+| Cluster | Persona | Deskripsi | Kriteria |
+|---------|---------|-----------|----------|
+| 0 | 🚀 **The Sprinter** | Fast Learner | `completion_speed < 0.5` + `avg_exam_score >= 75` |
+| 1 | 🔍 **The Deep Diver** | Slow but Thorough | `completion_speed > 2.0` + `avg_exam_score >= 70` |
+| 2 | 💪 **The Struggler** | Need Support | `avg_exam_score < 60` + `submission_fail_rate > 0.3` |
+| 3 | 📊 **The Consistent** | Steady Learner | `study_consistency_std < 100` |
+| 4 | 🦉 **The Night Owl** | Night-time Learner | `avg_study_hour >= 19` |
 
 **Use Case:** Label di dashboard user - "Kamu adalah The Night Owl!"
 
@@ -64,12 +65,13 @@ Mengelompokkan siswa ke 5 tipe persona berdasarkan aktivitas belajar:
 
 Generate saran belajar menggunakan **Google Gemini AI** yang:
 - ✅ Personal (menyapa dengan nama)
-- ✅ Empatik (memahami kondisi siswa)
+- ✅ Empatik (memahami kondisi siswa berdasarkan persona)
+- ✅ Context-aware (mempertimbangkan pace belajar)
 - ✅ Actionable (saran yang bisa diterapkan)
 - ✅ Motivasional (mendorong semangat)
 
 **Contoh Output:**
-> "Halo Budi! Kamu tipe Night Owl yang suka belajar malam. Kamu 20% lebih cepat dari rata-rata, hebat! Tapi nilai ujianmu bisa lebih baik. Coba review materi sebelum ujian ya. Semangat! 🚀"
+> "Halo Budi Santoso! Sebagai Night Owl yang belajar dengan pace cepat, kamu punya potensi luar biasa! Kami sarankan untuk tetap jaga kesehatan dengan istirahat cukup dan gunakan teknik pomodoro untuk fokus optimal di malam hari. Terus eksplorasi topik-topik advanced!"
 
 **Use Case:** Insight panel di dashboard siswa
 
@@ -78,10 +80,18 @@ Generate saran belajar menggunakan **Google Gemini AI** yang:
 ### 📊 Model 3: Learning Pace Analysis
 **"Seberapa Cepat Kamu Dibanding Siswa Lain?"**
 
-Analisis kecepatan belajar dengan output:
-- **Label:** Fast Learner / Average / Slow but Thorough
-- **Persentase:** "+25% lebih cepat dari rata-rata"
-- **Ranking:** "Top 15% siswa tercepat"
+Kategorisasi **3 tipe pace belajar**:
+
+| Label | Deskripsi | Kriteria |
+|-------|-----------|----------|
+| 🚀 **Fast Learner** | Belajar cepat dan efisien | `materials_per_day >= 5` + `weekly_cv <= median` |
+| 📊 **Consistent Learner** | Belajar teratur dan stabil | `weekly_cv <= median` |
+| 📚 **Reflective Learner** | Belajar mendalam dan reflektif | `completion_speed > 1.5` |
+
+**Output:**
+- **Label:** Fast Learner / Consistent Learner / Reflective Learner
+- **Scores:** fast_score, consistent_score, reflective_score (binary)
+- **Insight:** "Kamu belajar dengan cepat dan efisien! 🚀"
 
 **Use Case:** Badge di setiap card course
 
@@ -98,27 +108,25 @@ Analisis kecepatan belajar dengan output:
 └──────┬──────┘
        │
        ▼
-┌─────────────┐     ┌──────────────┐
+┌─────────────┐      ┌──────────────┐
 │   Backend   │────▶│   Database   │
 │   Server    │◀────│   (MySQL)    │
-└──────┬──────┘     └──────────────┘
-       │
-       │ HTTP Request
+└──────┬──────┘      └──────────────┘
+       │  
+       │ 1. Query data mentah
+       │ 2. HITUNG fitur (avg_study_hour, dll)
+       │ 3. HTTP Request ke ML API
        ▼
-┌─────────────┐     ┌──────────────┐
+┌─────────────┐      ┌──────────────┐
 │   ML API    │────▶│  ML Models   │
 │  (FastAPI)  │◀────│  (.pkl files)│
-└─────────────┘     └──────────────┘
+└─────────────┘      └──────────────┘
 ```
 
-### Penjelasan:
-
-1. **Frontend** → Tampilkan UI ke user
-2. **Backend** → Query database, hitung fitur, panggil ML API
-3. **ML API** → Terima request, prediksi pakai model, return hasil
-4. **Database** → Simpan semua data siswa & course
-
-**⚠️ PENTING:** ML API **TIDAK** connect ke database langsung!
+### ⚠️ PENTING:
+- ML API **TIDAK** connect ke database langsung
+- **Backend** yang query database dan **menghitung fitur**
+- ML API hanya terima fitur yang sudah dihitung → return prediksi
 
 ---
 
@@ -129,211 +137,225 @@ ML/
 ├── 📁 data/                    # Dataset
 │   ├── raw/                    # Data asli dari database (Excel)
 │   ├── interim/                # Data yang sudah dibersihkan
-│   └── processed/              # Features siap untuk model
+│   └── processed/              # Features + clustering results
+│       ├── clustering_results.csv    # Output Model 1
+│       └── pace_analysis_results.csv # Output Model 3
 │
 ├── 📁 models/                  # Model ML yang sudah dilatih
-│   ├── clustering_model_production.pkl
-│   └── pace_model_production.pkl
+│   ├── clustering_model_production.pkl  # Model 1 (Persona)
+│   └── pace_model.pkl                   # Model 3 (Pace)
 │
 ├── 📁 notebooks/               # Jupyter notebooks untuk training
 │   ├── 01_clean_individual_files.ipynb
 │   ├── 02_feature_engineering.ipynb
-│   ├── 03_model1_clustering_ADVANCED.ipynb
-│   ├── 04_model2_advice_generation.ipynb
-│   └── 05_model3_pace_analysis.ipynb
+│   ├── 03_model1_clustering_ADVANCED.ipynb  # ⭐ Model 1
+│   ├── 04_model2_advice_generation.ipynb    # ⭐ Model 2
+│   └── 05_model3_pace_analysis.ipynb        # ⭐ Model 3
 │
 ├── 📁 src/                     # Source code
-│   ├── api/                    # ⭐ API FILES (yang penting!)
+│   ├── 📁 api/                 # ⭐ API FILES
 │   │   ├── main.py            # FastAPI server
 │   │   ├── schemas.py         # Request/Response models
 │   │   └── services.py        # ML model logic
 │   │
-│   └── PANDUAN_API.md         # ⭐ BACA INI untuk cara pakai API!
+│   ├── test_api.py            # API testing script
+│   └── backend_integration_example.py
 │
+├── 📄 API_DOCUMENTATION.md               # ⭐ Dokumentasi API lengkap
+├── 📄 BACKEND_FEATURE_CALCULATION_GUIDE.md  # ⭐ Cara hitung fitur dari DB
 ├── .env.example               # Template environment variables
 ├── requirements.txt           # Python dependencies
-└── README.md                  # ⭐ File ini!
+└── README.md                  # File ini!
 ```
 
-### File Penting yang Harus Dibaca:
+### 📚 File Dokumentasi Penting:
 
 | File | Untuk Siapa | Isi |
 |------|-------------|-----|
 | **README.md** | Semua orang | Overview project (file ini) |
-| **PANDUAN_API.md** | Backend + Frontend | Cara pakai API (simple!) |
-| **src/api/main.py** | Developer | Source code API |
+| **API_DOCUMENTATION.md** | Backend + Frontend | Dokumentasi API lengkap |
+| **BACKEND_FEATURE_CALCULATION_GUIDE.md** | Backend | ⭐ Cara hitung fitur dari database! |
 
 ---
 
-## 🚀 Cara Install
+## 🚀 Quick Start
 
-### Prasyarat:
-- Python 3.8 atau lebih tinggi
-- Virtual environment sudah dibuat (folder `venv` atau `.venv`)
-
-### Step-by-Step:
-
-#### 1. Aktifkan Virtual Environment
+### 1. Install Dependencies
 
 ```bash
+# Aktifkan virtual environment
 # Windows
-venv\Scripts\activate
+.venv\Scripts\activate
 
 # Linux/Mac
-source venv/bin/activate
-```
+source .venv/bin/activate
 
-Pastikan ada `(venv)` di terminal Anda.
-
-#### 2. Install Dependencies
-
-```bash
+# Install packages
 pip install -r requirements.txt
 ```
 
-Library yang diinstall:
-- `fastapi` - Web framework
-- `uvicorn` - Server
-- `pydantic` - Validasi data
-- `scikit-learn` - ML library
-- `joblib` - Load model
-- `google-generativeai` - Gemini AI (optional)
-
-#### 3. Setup API Key (Opsional)
-
-Jika ingin pakai Gemini AI untuk Model 2:
+### 2. Setup Environment (Optional)
 
 ```bash
 # Copy template
 copy .env.example .env
 
-# Edit .env
-# Tambahkan: GEMINI_API_KEY=your_key_here
+# Edit .env dan tambahkan:
+# GEMINI_API_KEY=your_key_here
 ```
 
 Dapatkan API key dari: https://makersuite.google.com/app/apikey
 
 **Catatan:** Tanpa API key, Model 2 akan pakai template sederhana (tetap jalan).
 
-#### 4. Jalankan API Server
+### 3. Jalankan API Server
 
 ```bash
 cd src/api
 python main.py
 ```
 
-Jika berhasil, akan muncul:
+Output jika berhasil:
 ```
+============================================================
+🚀 Starting AI Learning Insight API v1.1.0...
+============================================================
 ✓ Clustering model loaded
 ✓ Pace model loaded  
 ✓ Gemini AI configured
+✅ All models loaded successfully!
 📝 API Documentation: http://localhost:8000/docs
+============================================================
 ```
 
-#### 5. Test API
+### 4. Test API
 
-Buka browser: **http://localhost:8000/docs**
+```bash
+# Di terminal baru
+python src/test_api.py
+```
 
-Anda akan lihat interface Swagger UI untuk testing.
+Output:
+```
+✓ All tests passed! (9/9)
+```
 
 ---
 
 ## 📖 Cara Menggunakan API
 
-### Quick Start - 3 Menit!
+### API Endpoints:
 
-**Dokumentasi lengkap:** Baca file **`PANDUAN_API.md`** untuk tutorial step-by-step!
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/health` | Health check |
+| POST | `/api/v1/persona/predict` | **Model 1:** Prediksi persona |
+| POST | `/api/v1/advice/generate` | **Model 2:** Generate saran AI |
+| POST | `/api/v1/pace/analyze` | **Model 3:** Analisis pace |
+| GET | `/api/v1/insights/{user_id}` | **Combined:** Semua model sekaligus |
 
-### Endpoint Utama:
+### Example: Persona Prediction
 
-1. **Health Check** - Cek status API
-   ```
-   GET http://localhost:8000/health
-   ```
+**Request:**
+```bash
+POST /api/v1/persona/predict
+Content-Type: application/json
 
-2. **Get Persona** - Dapatkan tipe pembelajar
-   ```
-   POST http://localhost:8000/api/v1/persona/predict
-   Body: {"user_id": 123}
-   ```
+{
+  "user_id": 123,
+  "features": {
+    "avg_study_hour": 21.5,
+    "study_consistency_std": 2.3,
+    "completion_speed": 0.35,
+    "avg_exam_score": 78.5,
+    "submission_fail_rate": 0.15,
+    "retry_count": 1
+  }
+}
+```
 
-3. **Generate Advice** - Saran belajar AI
-   ```
-   POST http://localhost:8000/api/v1/advice/generate
-   Body: {"user_id": 123, "name": "Budi"}
-   ```
+**Response:**
+```json
+{
+  "user_id": 123,
+  "persona_label": "The Night Owl",
+  "cluster_id": 4,
+  "confidence": 0.85,
+  "description": "Night-time Learner - Aktif belajar di malam hari",
+  "characteristics": [
+    "Mayoritas aktivitas belajar di jam 19:00 - 24:00",
+    "Konsistensi belajar cukup baik",
+    "Produktif di waktu malam"
+  ]
+}
+```
 
-4. **Analyze Pace** - Kecepatan belajar
-   ```
-   POST http://localhost:8000/api/v1/pace/analyze
-   Body: {"user_id": 123, "journey_id": 45}
-   ```
-
-5. **Complete Insights** - Semua sekaligus! ⭐
-   ```
-   GET http://localhost:8000/api/v1/insights/123?user_name=Budi
-   ```
-
-**Detail lengkap + contoh code:** Lihat **PANDUAN_API.md**!
+**📄 Dokumentasi lengkap:** Baca file **`API_DOCUMENTATION.md`**!
 
 ---
 
-## 🔧 Untuk Tim Backend
+## 🔧 Backend Integration
 
-### Yang Harus Dilakukan:
+### ⚠️ PENTING: Fitur Harus DIHITUNG dari Database!
 
-1. **Baca** file `PANDUAN_API.md` section "Untuk Backend"
-2. **Query** data dari database
-3. **Hitung** 6 fitur untuk Model 1:
-   - avg_study_hour
-   - study_consistency_std
-   - completion_speed
-   - avg_exam_score
-   - submission_fail_rate
-   - retry_count
+Fitur seperti `avg_study_hour`, `completion_speed`, dll. **TIDAK ADA** di tabel database secara langsung. Tim backend harus **MENGHITUNG** fitur-fitur ini dari data mentah.
 
-4. **Panggil** ML API dengan HTTP request
-5. **Return** hasil ke frontend
+### 📄 Panduan Lengkap:
+Baca **`BACKEND_FEATURE_CALCULATION_GUIDE.md`** untuk:
+- SQL queries untuk setiap fitur
+- Contoh code PHP/Laravel/Node.js
+- Mapping tabel database ke fitur
 
-### ⚠️ PENTING: Nama Kolom Database
+### Quick Reference:
 
-Database pakai nama kolom yang **BEDA** untuk user ID di setiap tabel:
+| Fitur | Sumber Tabel | Perhitungan |
+|-------|--------------|-------------|
+| `avg_study_hour` | `developer_journey_trackings` | `AVG(HOUR(first_opened_at))` |
+| `avg_exam_score` | `exam_results` + `exam_registrations` | `AVG(score)` |
+| `submission_fail_rate` | `developer_journey_submissions` | `COUNT(failed) / COUNT(*)` |
+| `completion_speed` | `developer_journey_completions` + `developer_journeys` | `study_duration / hours_to_study` |
+| `retry_count` | `developer_journey_completions` | `SUM(enrolling_times - 1)` |
 
-| Tabel | Kolom untuk User ID |
-|-------|---------------------|
-| `developer_journey_trackings` | `developer_id` ⚠️ |
-| `developer_journey_submissions` | `submitter_id` ⚠️ |
-| `developer_journey_completions` | `user_id` ✅ |
-| `exam_registrations` | `examinees_id` ⚠️ |
+### Flow Backend:
 
-**Solusi:** Lihat contoh SQL yang benar di **PANDUAN_API.md** section "Query Database"!
-
-### Contoh Code:
-
-```python
-import requests
-
-# Call ML API
-response = requests.post(
-    'http://localhost:8000/api/v1/persona/predict',
-    json={'user_id': 123}
-)
-
-persona = response.json()
-print(persona['persona_label'])  # "The Night Owl"
+```
+┌────────────────────────────────────────────────────────────┐
+│                     YOUR BACKEND                           │
+├────────────────────────────────────────────────────────────┤
+│  1. Request masuk dengan user_id                           │
+│  2. Query database, hitung fitur                           │
+│  3. Kirim ke ML API dengan fitur yang sudah dihitung       │
+│  4. Return hasil ke frontend                               │
+└────────────────────────────────────────────────────────────┘
 ```
 
-**Full example:** Lihat file `src/backend_integration_example.py`
+### Contoh Code (PHP/Laravel):
+
+```php
+public function getPrediction(int $userId) 
+{
+    // 1. Hitung fitur dari database
+    $avgStudyHour = DB::table('developer_journey_trackings')
+        ->where('developer_id', $userId)
+        ->selectRaw('AVG(HOUR(first_opened_at)) as avg')
+        ->value('avg') ?? 12.0;
+    
+    // 2. Kirim ke ML API
+    $response = Http::post('http://ml-api:8000/api/v1/persona/predict', [
+        'user_id' => $userId,
+        'features' => [
+            'avg_study_hour' => $avgStudyHour,
+            // ... fitur lainnya
+        ]
+    ]);
+    
+    return $response->json();
+}
+```
 
 ---
 
 ## 🎨 Untuk Tim Frontend
-
-### Yang Perlu Diketahui:
-
-1. **Frontend TIDAK panggil ML API langsung**
-2. Frontend panggil **backend endpoint** yang dibuat tim backend
-3. Backend yang akan panggil ML API
 
 ### Flow:
 
@@ -341,109 +363,30 @@ print(persona['persona_label'])  # "The Night Owl"
 Frontend → Backend → ML API → Response → Backend → Frontend
 ```
 
-### Response Format:
+**Frontend TIDAK panggil ML API langsung!** Panggil endpoint yang dibuat tim backend.
 
-Lihat **PANDUAN_API.md** section "Response Examples" untuk:
-- JSON structure lengkap
-- UI/UX suggestions
-- Component examples (React/Vue)
-- CSS styling ideas
+### Response Format untuk UI:
 
-### Contoh Display:
-
+**Persona Card:**
 ```jsx
-// Dashboard User
 <div className="persona-card">
-  <h2>{persona.label}</h2>  {/* "The Night Owl" */}
-  <p>Confidence: {persona.confidence * 100}%</p>
+  <h2>{persona.persona_label}</h2>  {/* "The Night Owl" */}
+  <p>Confidence: {(persona.confidence * 100).toFixed(0)}%</p>
   <ul>
     {persona.characteristics.map(char => 
-      <li>{char}</li>
+      <li key={char}>{char}</li>
     )}
   </ul>
 </div>
 ```
 
-**Full examples:** File `PANDUAN_API.md` punya semua contoh UI!
-
----
-
-## 🔬 Development & Training
-
-### Re-train Model (Jika Ada Data Baru):
-
-1. Export data baru dari database ke Excel
-2. Taruh di folder `data/raw/`
-3. Buka Jupyter notebooks di folder `notebooks/`:
-   ```bash
-   jupyter notebook
-   ```
-4. Jalankan notebook berurutan (01 → 05)
-5. Model baru akan tersimpan di folder `models/`
-6. Restart API server
-
-### Notebooks:
-
-| Notebook | Fungsi |
-|----------|--------|
-| `01_clean_individual_files.ipynb` | Bersihkan data |
-| `02_feature_engineering.ipynb` | Buat fitur |
-| `03_model1_clustering_ADVANCED.ipynb` | Train Model 1 |
-| `04_model2_advice_generation.ipynb` | Setup Model 2 |
-| `05_model3_pace_analysis.ipynb` | Train Model 3 |
-
----
-
-## ❓ FAQ
-
-### Q: Apakah API harus connect ke database?
-**A:** TIDAK! Backend yang query database. API hanya terima request dan return prediksi.
-
-### Q: Bagaimana cara dapat API key Gemini?
-**A:** 
-1. Buka https://makersuite.google.com/app/apikey
-2. Login dengan Google
-3. Create API key
-4. Copy ke file `.env`
-
-### Q: API error "Model not loaded"?
-**A:** Pastikan file `.pkl` ada di folder `models/` dan restart API.
-
-### Q: Bisa pakai bahasa selain Python?
-**A:** Ya! Backend bisa pakai language apa saja (Node.js, PHP, dll). Yang penting bisa HTTP request.
-
-### Q: Response time berapa lama?
-**A:**
-- Model 1 & 3: ~50-100ms
-- Model 2 (dengan Gemini): ~1-3 detik
-- Complete Insights: ~1-4 detik
-
-### Q: Port 8000 sudah dipakai?
-**A:** Edit `.env` → `API_PORT=8001`, lalu restart.
-
----
-
-## 📞 Support & Documentation
-
-### Dokumentasi Lengkap:
-
-| File | Deskripsi |
-|------|-----------|
-| **PANDUAN_API.md** | Tutorial lengkap cara pakai API ⭐ |
-| **Swagger UI** | http://localhost:8000/docs (interactive!) |
-| `src/backend_integration_example.py` | Contoh code lengkap |
-
-### Troubleshooting:
-
-**Problem:** API tidak bisa start
-**Solution:** 
-```bash
-pip install -r requirements.txt
-python src/api/main.py
+**Pace Badge:**
+```jsx
+<span className={`badge badge-${pace.pace_label.replace(' ', '-')}`}>
+  {pace.pace_label} {/* "Fast Learner" */}
+</span>
+<p>{pace.insight}</p> {/* "Kamu belajar dengan cepat! 🚀" */}
 ```
-
-**Problem:** "Cannot connect to API"
-**Solution:** Pastikan server running (jangan CTRL+C)
 
 ---
 
@@ -452,35 +395,59 @@ python src/api/main.py
 | Model | Metrik | Score |
 |-------|--------|-------|
 | Model 1 (Clustering) | Silhouette Score | 0.78 |
-| Model 3 (Pace) | R² Score | 0.85 |
-| Combined Accuracy | Overall | 82% |
+| Model 3 (Pace) | Silhouette Score | 0.65+ |
+| API Response Time (Model 1 & 3) | Latency | ~50-100ms |
+| API Response Time (Model 2 with Gemini) | Latency | ~1-3 detik |
 
 ---
 
-## 👥 Team
+## ❓ FAQ
 
-**Capstone Project Team**
-- Machine Learning Engineer
-- Backend Developer
-- Frontend Developer
+### Q: Apakah API harus connect ke database?
+**A:** TIDAK! Backend yang query database dan hitung fitur. API hanya terima request dengan fitur yang sudah dihitung.
+
+### Q: Bagaimana cara dapat API key Gemini?
+**A:** 
+1. Buka https://makersuite.google.com/app/apikey
+2. Login dengan Google
+3. Create API key
+4. Copy ke file `.env`
+
+### Q: Response ada nilai null?
+**A:** Pastikan mengirim semua fitur yang diperlukan di request. Lihat dokumentasi API untuk format lengkap.
+
+### Q: Bisa pakai bahasa selain Python untuk backend?
+**A:** Ya! Backend bisa pakai language apa saja (Node.js, PHP, Go, dll). Yang penting bisa HTTP request ke ML API.
+
+### Q: Port 8000 sudah dipakai?
+**A:** Edit di `main.py` → `uvicorn.run(..., port=8001)`, lalu restart.
 
 ---
 
-## 📝 License
+## 📝 Changelog
 
-MIT License - Lihat file `LICENSE` untuk detail.
+### v1.1.0 (2025-12-05)
+- ✅ Fixed: Pace analysis response null values
+- ✅ Updated: 5 persona dengan kriteria yang jelas
+- ✅ Updated: 3 pace categories (fast/consistent/reflective)
+- ✅ Added: Support untuk fitur langsung di request
+- ✅ Added: `BACKEND_FEATURE_CALCULATION_GUIDE.md`
+- ✅ Improved: Advice generation dengan persona + pace context
+
+### v1.0.0 (2025-12-02)
+- Initial release
 
 ---
 
 ## 🎉 Quick Links
 
 - **API Documentation:** http://localhost:8000/docs
-- **Tutorial Lengkap:** `PANDUAN_API.md`
-- **Contoh Code:** `src/backend_integration_example.py`
-- **Get Started:** [Cara Install](#cara-install)
+- **API Guide:** `API_DOCUMENTATION.md`
+- **Backend Feature Guide:** `BACKEND_FEATURE_CALCULATION_GUIDE.md`
+- **Test Script:** `python src/test_api.py`
 
 ---
 
-**Butuh bantuan?** Baca **PANDUAN_API.md** atau hubungi tim ML!
+**Butuh bantuan?** Baca dokumentasi atau hubungi tim ML!
 
 **Happy Coding! 🚀**
