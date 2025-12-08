@@ -53,7 +53,7 @@ Mengklasifikasikan siswa ke **5 tipe persona** berdasarkan aktivitas belajar men
 |-------|---------|-----------|----------|
 | 0 | 📊 **The Consistent** | Steady Learner | `study_consistency_std` rendah |
 | 1 | 🔍 **The Deep Diver** | Slow but Thorough | `completion_speed` tinggi + `avg_exam_score` tinggi |
-| 2 | 🦉 **The Night Owl** | Night-time Learner | `avg_study_hour >= 19` |
+| 2 | 🦉 **The Night Owl** | Night-time Learner | `avg_study_hour >= 19 OR < 6` |
 | 3 | 🚀 **The Sprinter** | Fast Learner | `completion_speed` rendah + `avg_exam_score` tinggi |
 | 4 | 💪 **The Struggler** | Need Support | `avg_exam_score` rendah + `submission_fail_rate` tinggi |
 

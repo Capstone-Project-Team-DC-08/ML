@@ -79,7 +79,7 @@ Response:
   "cluster_id": 2,
   "confidence": 0.85,
   "description": "Night-time Learner - Aktif belajar di malam hari",
-  "criteria": "avg_study_hour >= 19",
+  "criteria": "avg_study_hour >= 19 OR < 6",
   "characteristics": [
     "Mayoritas aktivitas belajar di jam 19:00 - 24:00",
     "Konsistensi belajar cukup baik",
@@ -94,7 +94,7 @@ Response:
 |-------|---------|-----------|----------|
 | 0 | The Consistent | Steady Learner | `study_consistency_std` rendah |
 | 1 | The Deep Diver | Slow but Thorough | `completion_speed` tinggi + `avg_exam_score` tinggi |
-| 2 | The Night Owl | Night-time Learner | `avg_study_hour >= 19` |
+| 2 | The Night Owl | Night-time Learner | `avg_study_hour >= 19 OR < 6` |
 | 3 | The Sprinter | Fast Learner | `completion_speed` rendah + `avg_exam_score` tinggi |
 | 4 | The Struggler | Need Support | `avg_exam_score` rendah + `submission_fail_rate` tinggi |
 
