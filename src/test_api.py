@@ -2,6 +2,11 @@
 Test Script untuk AI Learning Insight API
 Script ini untuk testing semua endpoint API
 Run: python test_api.py
+
+UPDATED: Sesuai dengan perubahan Model 1 & 3 dari Clustering ke Classification
+- Model 1 (Persona): Classification dengan 5 persona
+- Model 2 (Advice): Gemini AI dengan integrasi persona + pace
+- Model 3 (Pace): Classification dengan 3 pace labels
 """
 
 import requests
@@ -106,11 +111,13 @@ def test_root_endpoint():
 
 
 def test_persona_prediction():
-    """Test persona prediction endpoint"""
-    print_header("Test 3: Persona Prediction (Model 1)")
+    """Test persona prediction endpoint (Model 1 - Classification)"""
+    print_header("Test 3: Persona Prediction (Model 1 - Classification)")
     
     try:
-        # Test data dengan features lengkap
+        # Test data dengan features lengkap untuk Classification Model
+        # Features: avg_study_hour, study_consistency_std, completion_speed,
+        #           avg_exam_score, submission_fail_rate, retry_count
         payload = {
             "user_id": 123,
             "features": {
@@ -189,7 +196,7 @@ def test_batch_persona():
 
 
 def test_advice_generation():
-    """Test advice generation endpoint"""
+    """Test advice generation endpoint (Model 2 - Gemini AI)"""
     print_header("Test 5: Personalized Advice Generation (Model 2)")
     
     try:
@@ -240,23 +247,27 @@ def test_advice_generation():
 
 
 def test_pace_analysis():
-    """Test pace analysis endpoint"""
-    print_header("Test 6: Learning Pace Analysis (Model 3)")
+    """Test pace analysis endpoint (Model 3 - Classification)"""
+    print_header("Test 6: Learning Pace Analysis (Model 3 - Classification)")
     
     try:
-        # Updated payload dengan features
+        # Updated payload dengan features untuk Classification Model
+        # Features: completion_speed, study_consistency_std, avg_study_hour,
+        #           completed_modules, total_modules_viewed
         payload = {
             "user_id": 123,
             "journey_id": 45,
             "features": {
-                "materials_per_day": 6.5,
-                "weekly_cv": 0.3,
-                "completion_speed": 0.8
+                "completion_speed": 0.3,
+                "study_consistency_std": 50.0,
+                "avg_study_hour": 14.0,
+                "completed_modules": 50,
+                "total_modules_viewed": 60
             }
         }
         
         print(f"Testing pace for user {payload['user_id']} on journey {payload['journey_id']}")
-        print(f"Features: materials_per_day={payload['features']['materials_per_day']}")
+        print(f"Features: completion_speed={payload['features']['completion_speed']}, completed_modules={payload['features']['completed_modules']}")
         
         response = requests.post(
             f"{API_BASE_URL}/api/v1/pace/analyze",
@@ -269,8 +280,14 @@ def test_pace_analysis():
             print_success(f"Journey ID: {data.get('journey_id', 'N/A')}")
             print_success(f"Journey Name: {data.get('journey_name', 'N/A')}")
             print_success(f"Pace Label: {data['pace_label']}")
+            
+            # Show confidence if available
+            if data.get('cluster_id') is not None:
+                print_success(f"Cluster ID: {data['cluster_id']}")
+            
             if 'scores' in data and data['scores']:
                 print_success(f"Scores: fast={data['scores'].get('fast_score', 'N/A')}, consistent={data['scores'].get('consistent_score', 'N/A')}")
+            
             if data.get('pace_percentage') is not None:
                 print_success(f"Pace Percentage: {data['pace_percentage']}%")
             if data.get('user_duration_hours') is not None:
@@ -288,6 +305,7 @@ def test_pace_analysis():
             return True
         else:
             print_error(f"Pace analysis failed with status {response.status_code}")
+            print_response(response.json(), "Error Response")
             return False
             
     except Exception as e:
@@ -387,6 +405,7 @@ def run_all_tests():
     print(f"\n{Colors.BLUE}")
     print("="*60)
     print("  AI Learning Insight API - Test Suite")
+    print("  (Updated for Classification Models)")
     print("="*60)
     print(f"{Colors.END}")
     print(f"Testing API at: {API_BASE_URL}")
@@ -395,10 +414,10 @@ def run_all_tests():
     tests = [
         ("Health Check", test_health_check),
         ("Root Endpoint", test_root_endpoint),
-        ("Persona Prediction", test_persona_prediction),
+        ("Persona Prediction (Classification)", test_persona_prediction),
         ("Batch Persona", test_batch_persona),
-        ("Advice Generation", test_advice_generation),
-        ("Pace Analysis", test_pace_analysis),
+        ("Advice Generation (Gemini)", test_advice_generation),
+        ("Pace Analysis (Classification)", test_pace_analysis),
         ("Pace Summary", test_pace_summary),
         ("Complete Insights", test_complete_insights),
         ("API Documentation", test_swagger_docs),
@@ -442,6 +461,8 @@ if __name__ == "__main__":
     # Intro
     print("\n" + "="*60)
     print("  Starting API Tests...")
+    print("  Model 1 & 3: Classification (Supervised)")
+    print("  Model 2: Advice Generation (Gemini AI)")
     print("="*60)
     print("\nMake sure the API server is running before testing!")
     print("To start server: cd src/api && python main.py\n")
