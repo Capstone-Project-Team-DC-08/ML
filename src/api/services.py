@@ -74,12 +74,12 @@ class ModelService:
             },
             2: {
                 "label": "The Night Owl",
-                "description": "Night-time Learner - Aktif belajar di malam hari",
-                "criteria": "avg_study_hour >= 19",
+                "description": "Night-time Learner - Aktif belajar di malam/dini hari",
+                "criteria": "avg_study_hour >= 19 OR avg_study_hour < 6",
                 "characteristics": [
-                    "Mayoritas aktivitas belajar di jam 19:00 - 24:00",
+                    "Mayoritas aktivitas belajar di jam 19:00 - 06:00",
                     "Konsistensi belajar cukup baik",
-                    "Produktif di waktu malam"
+                    "Produktif di waktu malam/dini hari"
                 ]
             },
             3: {
@@ -352,7 +352,8 @@ class PersonaService(ModelService):
                 override_applied = False
                 
                 # Night Owl override (critical: study hour is definitive)
-                if avg_study_hour >= 19 and persona_label != "The Night Owl":
+                # UPDATED: Night Owl sekarang mencakup jam 19-24 DAN jam 0-5 (dini hari)
+                if (avg_study_hour >= 19 or avg_study_hour < 6) and persona_label != "The Night Owl":
                     persona_label = "The Night Owl"
                     cluster_id = 2  # Based on new mapping
                     confidence = 0.90
