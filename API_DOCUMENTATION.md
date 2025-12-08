@@ -4,9 +4,9 @@
 
 API ini menyediakan layanan Machine Learning untuk platform pembelajaran dengan 3 model utama:
 
-1. **Model 1: Persona Clustering** - Mengidentifikasi tipe pembelajar
-2. **Model 2: Advice Generation** - Menghasilkan saran personal dengan AI
-3. **Model 3: Pace Analysis** - Menganalisis kecepatan belajar
+1. **Model 1: Persona Classification** - Mengklasifikasikan tipe pembelajar (Random Forest)
+2. **Model 2: Advice Generation** - Menghasilkan saran personal dengan AI (Gemini)
+3. **Model 3: Pace Classification** - Mengklasifikasikan kecepatan belajar (Random Forest)
 
 ## 🚀 Quick Start
 
@@ -52,7 +52,7 @@ Response:
 
 ---
 
-### Model 1: Persona Prediction
+### Model 1: Persona Classification
 
 **POST** `/api/v1/persona/predict`
 
@@ -76,7 +76,7 @@ Response:
 {
   "user_id": 123,
   "persona_label": "The Night Owl",
-  "cluster_id": 4,
+  "cluster_id": 2,
   "confidence": 0.85,
   "description": "Night-time Learner - Aktif belajar di malam hari",
   "criteria": "avg_study_hour >= 19",
@@ -88,15 +88,15 @@ Response:
 }
 ```
 
-**5 Persona yang tersedia:**
+**5 Persona yang tersedia (Classification Model - LabelEncoder Order):**
 
-| Cluster | Persona | Kriteria |
-|---------|---------|----------|
-| 0 | The Sprinter | completion_speed < 0.5 + avg_exam_score >= 75 |
-| 1 | The Deep Diver | completion_speed > 2.0 + avg_exam_score >= 70 |
-| 2 | The Struggler | avg_exam_score < 60 + submission_fail_rate > 0.3 |
-| 3 | The Consistent | study_consistency_std < 100 |
-| 4 | The Night Owl | avg_study_hour >= 19 |
+| Class | Persona | Deskripsi | Kriteria |
+|-------|---------|-----------|----------|
+| 0 | The Consistent | Steady Learner | `study_consistency_std` rendah |
+| 1 | The Deep Diver | Slow but Thorough | `completion_speed` tinggi + `avg_exam_score` tinggi |
+| 2 | The Night Owl | Night-time Learner | `avg_study_hour >= 19` |
+| 3 | The Sprinter | Fast Learner | `completion_speed` rendah + `avg_exam_score` tinggi |
+| 4 | The Struggler | Need Support | `avg_exam_score` rendah + `submission_fail_rate` tinggi |
 
 ---
 
@@ -130,7 +130,7 @@ Response:
 
 ---
 
-### Model 3: Pace Analysis
+### Model 3: Pace Classification
 
 **POST** `/api/v1/pace/analyze`
 
@@ -140,9 +140,11 @@ Response:
   "user_id": 123,
   "journey_id": 45,
   "features": {
-    "materials_per_day": 6.5,
-    "weekly_cv": 0.3,
-    "completion_speed": 0.8
+    "completion_speed": 0.3,
+    "study_consistency_std": 50.0,
+    "avg_study_hour": 14.0,
+    "completed_modules": 50,
+    "total_modules_viewed": 60
   }
 }
 ```
@@ -151,24 +153,27 @@ Response:
 ```json
 {
   "user_id": 123,
+  "journey_id": 45,
+  "journey_name": "Belajar Machine Learning",
   "pace_label": "fast learner",
-  "cluster_id": 0,
-  "scores": {
-    "fast_score": 1,
-    "consistent_score": 1,
-    "reflective_score": 0
-  },
+  "cluster_id": 1,
+  "confidence": 0.92,
+  "pace_percentage": 70.0,
+  "user_duration_hours": 75.0,
+  "avg_duration_hours": 90.0,
+  "expected_duration_hours": 120.0,
+  "percentile_rank": 85,
   "insight": "Kamu belajar dengan cepat dan efisien! 🚀"
 }
 ```
 
-**3 Pace Categories:**
+**3 Pace Categories (Classification Model - LabelEncoder Order):**
 
-| Label | Kriteria |
-|-------|----------|
-| Fast Learner | materials_per_day >= 5 + weekly_cv <= median |
-| Consistent Learner | weekly_cv <= median |
-| Reflective Learner | completion_speed > 1.5 |
+| Class | Label | Deskripsi | Kriteria |
+|-------|-------|-----------|----------|
+| 0 | Consistent Learner | Belajar teratur dan stabil | `weekly_cv` rendah |
+| 1 | Fast Learner | Belajar cepat dan efisien | `completion_speed < 0.55` |
+| 2 | Reflective Learner | Belajar mendalam dan reflektif | `completion_speed > 1.5` |
 
 ---
 
@@ -244,3 +249,34 @@ Fitur-fitur ini harus **DIHITUNG** dari data mentah.
 | GEMINI_API_KEY | API key untuk Gemini AI | Yes (for advice) |
 
 ---
+
+## 📊 Model Info
+
+### Model 1: Persona Classification
+- **Algorithm:** Random Forest Classifier
+- **Classes:** 5 (The Consistent, The Deep Diver, The Night Owl, The Sprinter, The Struggler)
+- **Features:** 6 (avg_study_hour, study_consistency_std, completion_speed, avg_exam_score, submission_fail_rate, retry_count)
+- **File:** `models/persona_classifier.pkl`
+
+### Model 3: Pace Classification
+- **Algorithm:** Random Forest Classifier
+- **Classes:** 3 (Consistent Learner, Fast Learner, Reflective Learner)
+- **Features:** 5 (completion_speed, study_consistency_std, avg_study_hour, completed_modules, total_modules_viewed)
+- **File:** `models/pace_classifier.pkl`
+
+---
+
+## 📝 Changelog
+
+### v1.2.0 (2025-12-08)
+- Updated Model 1 & 3 from Clustering to Classification
+- Fixed class mapping to match LabelEncoder order
+- Added confidence scores
+
+### v1.1.0 (2025-12-05)
+- Fixed pace analysis null values
+- Added support for features in request body
+
+---
+
+**For more details, see:** `BACKEND_FEATURE_CALCULATION_GUIDE.md` and `BACKEND_INTEGRATION_NODEJS.md`

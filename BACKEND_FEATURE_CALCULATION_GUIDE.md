@@ -9,7 +9,19 @@ Database Tables → Calculate Features → Call ML API → Get Prediction
 
 ---
 
-## 🔢 Model 1: Persona Prediction - Feature Calculations
+## 🔢 Model 1: Persona Classification - Feature Calculations
+
+**⚠️ Model 1 menggunakan Classification (Random Forest Classifier)**
+
+### 5 Persona Categories (LabelEncoder Order):
+
+| Class | Persona | Deskripsi |
+|-------|---------|-----------|
+| 0 | The Consistent | Steady Learner |
+| 1 | The Deep Diver | Slow but Thorough |
+| 2 | The Night Owl | Night-time Learner |
+| 3 | The Sprinter | Fast Learner |
+| 4 | The Struggler | Need Support |
 
 ### Request yang dibutuhkan:
 ```json
@@ -248,7 +260,17 @@ $retryCount = DeveloperJourneyCompletion::where('user_id', $userId)
 
 ---
 
-## 🚀 Model 3: Pace Analysis - Feature Calculations
+## 🚀 Model 3: Pace Classification - Feature Calculations
+
+**⚠️ UPDATED: Model 3 sekarang menggunakan Classification (Random Forest), bukan Clustering!**
+
+### 3 Pace Categories (LabelEncoder Order):
+
+| Class | Label | Deskripsi |
+|-------|-------|-----------|
+| 0 | Consistent Learner | Belajar teratur dan stabil |
+| 1 | Fast Learner | Belajar cepat dan efisien |
+| 2 | Reflective Learner | Belajar mendalam dan reflektif |
 
 ### Request yang dibutuhkan:
 ```json
@@ -256,88 +278,76 @@ $retryCount = DeveloperJourneyCompletion::where('user_id', $userId)
   "user_id": 123,
   "journey_id": 45,
   "features": {
-    "materials_per_day": 6.5,
-    "weekly_cv": 0.3,
-    "completion_speed": 0.8
+    "completion_speed": 0.3,
+    "study_consistency_std": 50.0,
+    "avg_study_hour": 14.0,
+    "completed_modules": 50,
+    "total_modules_viewed": 60
   }
 }
 ```
 
 ---
 
-### 1. `materials_per_day` - Materi per Hari
+### 1. `completion_speed` - Kecepatan Penyelesaian
+
+**Sama seperti Model 1** - lihat bagian di atas.
+
+---
+
+### 2. `study_consistency_std` - Standar Deviasi Konsistensi
+
+**Sama seperti Model 1** - lihat bagian di atas.
+
+---
+
+### 3. `avg_study_hour` - Rata-rata Jam Belajar
+
+**Sama seperti Model 1** - lihat bagian di atas.
+
+---
+
+### 4. `completed_modules` - Jumlah Modul Selesai
 
 **Sumber**: `developer_journey_trackings`
 
 ```sql
-WITH date_range AS (
-    SELECT 
-        developer_id,
-        journey_id,
-        COUNT(*) as total_materials,
-        DATEDIFF(MAX(completed_at), MIN(first_opened_at)) + 1 as total_days
-    FROM developer_journey_trackings
-    WHERE developer_id = :user_id
-      AND journey_id = :journey_id
-      AND completed_at IS NOT NULL
-    GROUP BY developer_id, journey_id
-)
-SELECT 
-    total_materials * 1.0 / GREATEST(total_days, 1) as materials_per_day
-FROM date_range;
+SELECT COUNT(*) as completed_modules
+FROM developer_journey_trackings
+WHERE developer_id = :user_id
+  AND journey_id = :journey_id
+  AND completed_at IS NOT NULL;
 ```
 
 **PHP/Laravel Example**:
 ```php
-$tracking = DeveloperJourneyTracking::where('developer_id', $userId)
+$completedModules = DeveloperJourneyTracking::where('developer_id', $userId)
     ->where('journey_id', $journeyId)
     ->whereNotNull('completed_at')
-    ->selectRaw('
-        COUNT(*) as total_materials,
-        DATEDIFF(MAX(completed_at), MIN(first_opened_at)) + 1 as total_days
-    ')
-    ->first();
-
-$materialsPerDay = ($tracking->total_days > 0)
-    ? $tracking->total_materials / $tracking->total_days
-    : 0;
+    ->count();
 ```
 
 ---
 
-### 2. `weekly_cv` - Coefficient of Variation Mingguan
+### 5. `total_modules_viewed` - Total Modul yang Dilihat
 
 **Sumber**: `developer_journey_trackings`
 
-**Logika**: Hitung variasi aktivitas antar minggu
-
 ```sql
-WITH weekly_activity AS (
-    SELECT 
-        developer_id,
-        YEARWEEK(first_opened_at) as week,
-        COUNT(*) as materials_count
-    FROM developer_journey_trackings
-    WHERE developer_id = :user_id
-      AND first_opened_at IS NOT NULL
-    GROUP BY developer_id, YEARWEEK(first_opened_at)
-)
-SELECT 
-    developer_id,
-    AVG(materials_count) as mean,
-    STDDEV(materials_count) as std,
-    STDDEV(materials_count) / NULLIF(AVG(materials_count), 0) as cv
-FROM weekly_activity
-GROUP BY developer_id;
+SELECT COUNT(*) as total_modules_viewed
+FROM developer_journey_trackings
+WHERE developer_id = :user_id
+  AND journey_id = :journey_id
+  AND first_opened_at IS NOT NULL;
 ```
 
-**Catatan**: 
-- CV rendah = konsisten
-- CV tinggi = tidak konsisten
-
----
-
-### 3. `completion_speed` - sama seperti Model 1
+**PHP/Laravel Example**:
+```php
+$totalModulesViewed = DeveloperJourneyTracking::where('developer_id', $userId)
+    ->where('journey_id', $journeyId)
+    ->whereNotNull('first_opened_at')
+    ->count();
+```
 
 ---
 
@@ -414,6 +424,8 @@ class MLApiService
 
 ## 📋 Quick Reference Table
 
+### Model 1: Persona Classification Features
+
 | Feature | Source Table(s) | Key Columns | Calculation |
 |---------|-----------------|-------------|-------------|
 | `avg_study_hour` | `developer_journey_trackings` | `first_opened_at` | AVG(HOUR(first_opened_at)) |
@@ -422,8 +434,16 @@ class MLApiService
 | `avg_exam_score` | `exam_results` + `exam_registrations` | `score`, `examinees_id` | AVG(score) |
 | `submission_fail_rate` | `developer_journey_submissions` | `status`, `submitter_id` | COUNT(failed) / COUNT(total) |
 | `retry_count` | `developer_journey_completions` | `enrolling_times` | SUM(enrolling_times - 1) |
-| `materials_per_day` | `developer_journey_trackings` | `completed_at`, `first_opened_at` | COUNT / days_between |
-| `weekly_cv` | `developer_journey_trackings` | `first_opened_at` | STDDEV(weekly) / AVG(weekly) |
+
+### Model 3: Pace Classification Features
+
+| Feature | Source Table(s) | Key Columns | Calculation |
+|---------|-----------------|-------------|-------------|
+| `completion_speed` | Same as Model 1 | | |
+| `study_consistency_std` | Same as Model 1 | | |
+| `avg_study_hour` | Same as Model 1 | | |
+| `completed_modules` | `developer_journey_trackings` | `completed_at` | COUNT where completed_at IS NOT NULL |
+| `total_modules_viewed` | `developer_journey_trackings` | `first_opened_at` | COUNT where first_opened_at IS NOT NULL |
 
 ---
 
@@ -432,15 +452,23 @@ class MLApiService
 Jika data tidak tersedia, gunakan default values:
 
 ```php
-$defaults = [
+// Model 1: Persona Features
+$personaDefaults = [
     'avg_study_hour' => 12.0,       // Tengah hari
     'study_consistency_std' => 100.0, // Cukup konsisten
     'completion_speed' => 1.0,       // Rata-rata
     'avg_exam_score' => 75.0,        // Score menengah
     'submission_fail_rate' => 0.1,   // 10% fail rate
     'retry_count' => 0,              // Tidak pernah retry
-    'materials_per_day' => 3.0,      // 3 materi per hari
-    'weekly_cv' => 0.5,              // Variasi sedang
+];
+
+// Model 3: Pace Features
+$paceDefaults = [
+    'completion_speed' => 1.0,
+    'study_consistency_std' => 100.0,
+    'avg_study_hour' => 14.0,
+    'completed_modules' => 30,
+    'total_modules_viewed' => 50,
 ];
 ```
 

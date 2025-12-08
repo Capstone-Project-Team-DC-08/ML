@@ -4,7 +4,7 @@
 
 [![Python](https://img.shields.io/badge/Python-3.8+-blue.svg)](https://www.python.org/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.104+-green.svg)](https://fastapi.tiangolo.com/)
-[![API Version](https://img.shields.io/badge/API-v1.1.0-brightgreen.svg)](#)
+[![API Version](https://img.shields.io/badge/API-v1.2.0-brightgreen.svg)](#)
 [![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 ---
@@ -13,13 +13,14 @@
 
 1. [Tentang Project](#tentang-project)
 2. [Fitur Utama](#fitur-utama)
-3. [Arsitektur System](#arsitektur-system)
-4. [Struktur Folder](#struktur-folder)
-5. [Quick Start](#quick-start)
-6. [Cara Menggunakan API](#cara-menggunakan-api)
-7. [Backend Integration](#backend-integration)
-8. [Untuk Tim Frontend](#untuk-tim-frontend)
-9. [FAQ](#faq)
+3. [Database Sources & Features](#database-sources--features)
+4. [Arsitektur System](#arsitektur-system)
+5. [Struktur Folder](#struktur-folder)
+6. [Quick Start](#quick-start)
+7. [Cara Menggunakan API](#cara-menggunakan-api)
+8. [Backend Integration](#backend-integration)
+9. [Untuk Tim Frontend](#untuk-tim-frontend)
+10. [FAQ](#faq)
 
 ---
 
@@ -29,7 +30,7 @@ Project ini adalah sistem Machine Learning untuk **menganalisis pola belajar sis
 
 ### Problem yang Diselesaikan:
 
-1. **Siswa tidak tahu tipe belajar mereka** → Model 1 mengelompokkan ke 5 persona
+1. **Siswa tidak tahu tipe belajar mereka** → Model 1 mengklasifikasikan ke 5 persona
 2. **Siswa butuh motivasi & saran** → Model 2 generate saran personal dengan AI
 3. **Siswa tidak tahu progress mereka** → Model 3 analisis kecepatan belajar
 
@@ -43,18 +44,18 @@ Project ini adalah sistem Machine Learning untuk **menganalisis pola belajar sis
 
 ## ✨ Fitur Utama
 
-### 🎭 Model 1: Persona Clustering
+### 🎭 Model 1: Persona Classification
 **"Kamu Tipe Pembelajar Apa?"**
 
-Mengelompokkan siswa ke **5 tipe persona** berdasarkan aktivitas belajar:
+Mengklasifikasikan siswa ke **5 tipe persona** berdasarkan aktivitas belajar menggunakan **Random Forest Classifier**:
 
-| Cluster | Persona | Deskripsi | Kriteria |
-|---------|---------|-----------|----------|
-| 0 | 🚀 **The Sprinter** | Fast Learner | `completion_speed < 0.5` + `avg_exam_score >= 75` |
-| 1 | 🔍 **The Deep Diver** | Slow but Thorough | `completion_speed > 2.0` + `avg_exam_score >= 70` |
-| 2 | 💪 **The Struggler** | Need Support | `avg_exam_score < 60` + `submission_fail_rate > 0.3` |
-| 3 | 📊 **The Consistent** | Steady Learner | `study_consistency_std < 100` |
-| 4 | 🦉 **The Night Owl** | Night-time Learner | `avg_study_hour >= 19` |
+| Class | Persona | Deskripsi | Kriteria |
+|-------|---------|-----------|----------|
+| 0 | 📊 **The Consistent** | Steady Learner | `study_consistency_std` rendah |
+| 1 | 🔍 **The Deep Diver** | Slow but Thorough | `completion_speed` tinggi + `avg_exam_score` tinggi |
+| 2 | 🦉 **The Night Owl** | Night-time Learner | `avg_study_hour >= 19` |
+| 3 | 🚀 **The Sprinter** | Fast Learner | `completion_speed` rendah + `avg_exam_score` tinggi |
+| 4 | 💪 **The Struggler** | Need Support | `avg_exam_score` rendah + `submission_fail_rate` tinggi |
 
 **Use Case:** Label di dashboard user - "Kamu adalah The Night Owl!"
 
@@ -77,23 +78,85 @@ Generate saran belajar menggunakan **Google Gemini AI** yang:
 
 ---
 
-### 📊 Model 3: Learning Pace Analysis
+### 📊 Model 3: Learning Pace Classification
 **"Seberapa Cepat Kamu Dibanding Siswa Lain?"**
 
-Kategorisasi **3 tipe pace belajar**:
+Mengklasifikasikan **3 tipe pace belajar** menggunakan **Random Forest Classifier**:
 
-| Label | Deskripsi | Kriteria |
-|-------|-----------|----------|
-| 🚀 **Fast Learner** | Belajar cepat dan efisien | `materials_per_day >= 5` + `weekly_cv <= median` |
-| 📊 **Consistent Learner** | Belajar teratur dan stabil | `weekly_cv <= median` |
-| 📚 **Reflective Learner** | Belajar mendalam dan reflektif | `completion_speed > 1.5` |
+| Class | Label | Deskripsi | Kriteria |
+|-------|-------|-----------|----------|
+| 0 | 📊 **Consistent Learner** | Belajar teratur dan stabil | `weekly_cv` rendah |
+| 1 | 🚀 **Fast Learner** | Belajar cepat dan efisien | `completion_speed < 0.55` |
+| 2 | 📚 **Reflective Learner** | Belajar mendalam dan reflektif | `completion_speed > 1.5` |
 
 **Output:**
 - **Label:** Fast Learner / Consistent Learner / Reflective Learner
-- **Scores:** fast_score, consistent_score, reflective_score (binary)
+- **Confidence:** Tingkat kepercayaan prediksi
 - **Insight:** "Kamu belajar dengan cepat dan efisien! 🚀"
 
 **Use Case:** Badge di setiap card course
+
+---
+
+## 📊 Database Sources & Features
+
+### Tabel Database yang Digunakan
+
+| Tabel | Deskripsi | Kolom Utama |
+|-------|-----------|-------------|
+| `users` | Data pengguna | `id`, `name`, `email` |
+| `developer_journey_trackings` | Tracking aktivitas belajar | `developer_id`, `journey_id`, `tutorial_id`, `first_opened_at`, `completed_at`, `last_viewed` |
+| `developer_journey_submissions` | Data pengumpulan tugas | `submitter_id`, `journey_id`, `status`, `rating`, `created_at` |
+| `exam_results` | Hasil ujian | `exam_registration_id`, `score`, `is_passed` |
+| `exam_registrations` | Registrasi ujian | `id`, `examinees_id`, `tutorial_id` |
+| `developer_journey_completions` | Penyelesaian learning path | `user_id`, `journey_id`, `study_duration`, `enrolling_times` |
+| `developer_journeys` | Informasi learning path | `id`, `name`, `difficulty`, `hours_to_study` |
+| `tutorials` | Materi pembelajaran | `id`, `developer_journey_id`, `name` |
+
+---
+
+### 🎭 Model 1: Persona Classification - Data Sources
+
+**Fitur yang Dibutuhkan:**
+
+| Feature | Sumber Tabel | Kolom yang Digunakan | Perhitungan |
+|---------|--------------|----------------------|-------------|
+| `avg_study_hour` | `developer_journey_trackings` | `first_opened_at` | `AVG(HOUR(first_opened_at))` |
+| `study_consistency_std` | `developer_journey_trackings` | `first_opened_at` | Standard deviasi dari aktivitas harian |
+| `completion_speed` | `developer_journey_completions` + `developer_journeys` | `study_duration`, `hours_to_study` | `study_duration / hours_to_study` |
+| `avg_exam_score` | `exam_results` + `exam_registrations` | `score`, `examinees_id` | `AVG(score)` |
+| `submission_fail_rate` | `developer_journey_submissions` | `status`, `submitter_id` | `COUNT(failed) / COUNT(*)` |
+| `retry_count` | `developer_journey_completions` | `enrolling_times` | `SUM(enrolling_times - 1)` |
+
+---
+
+### 💬 Model 2: Advice Generation - Data Sources
+
+**Fitur yang Dibutuhkan:**
+
+| Feature | Sumber | Deskripsi |
+|---------|--------|-----------|
+| `name` | `users.name` | Nama siswa untuk personalisasi |
+| `persona_label` | Output Model 1 | Tipe persona dari prediksi |
+| `pace_label` | Output Model 3 | Kecepatan belajar dari prediksi |
+| `avg_exam_score` | Sama seperti Model 1 | Rata-rata nilai ujian |
+| `course_name` | `developer_journeys.name` | Nama learning path |
+
+---
+
+### 📊 Model 3: Pace Classification - Data Sources
+
+**Fitur yang Dibutuhkan:**
+
+| Feature | Sumber Tabel | Kolom yang Digunakan | Perhitungan |
+|---------|--------------|----------------------|-------------|
+| `completion_speed` | `developer_journey_completions` + `developer_journeys` | `study_duration`, `hours_to_study` | `study_duration / hours_to_study` |
+| `study_consistency_std` | `developer_journey_trackings` | `first_opened_at` | Standard deviasi dari aktivitas harian |
+| `avg_study_hour` | `developer_journey_trackings` | `first_opened_at` | `AVG(HOUR(first_opened_at))` |
+| `completed_modules` | `developer_journey_trackings` | `completed_at` | `COUNT(*)` where completed |
+| `total_modules_viewed` | `developer_journey_trackings` | `first_opened_at` | `COUNT(*)` where viewed |
+
+📄 **Detail lengkap:** Lihat `BACKEND_FEATURE_CALCULATION_GUIDE.md`
 
 ---
 
@@ -137,20 +200,24 @@ ML/
 ├── 📁 data/                    # Dataset
 │   ├── raw/                    # Data asli dari database (Excel)
 │   ├── interim/                # Data yang sudah dibersihkan
-│   └── processed/              # Features + clustering results
+│   └── processed/              # Features + classification results
 │       ├── clustering_results.csv    # Output Model 1
 │       └── pace_analysis_results.csv # Output Model 3
 │
 ├── 📁 models/                  # Model ML yang sudah dilatih
-│   ├── clustering_model_production.pkl  # Model 1 (Persona)
-│   └── pace_model.pkl                   # Model 3 (Pace)
+│   ├── persona_classifier.pkl        # Model 1 (Classification - PRIMARY)
+│   ├── clustering_model_production.pkl  # Model 1 (Clustering - FALLBACK)
+│   ├── pace_classifier.pkl           # Model 3 (Classification - PRIMARY)
+│   └── pace_model.pkl                # Model 3 (Clustering - FALLBACK)
 │
 ├── 📁 notebooks/               # Jupyter notebooks untuk training
 │   ├── 01_clean_individual_files.ipynb
 │   ├── 02_feature_engineering.ipynb
-│   ├── 03_model1_clustering_ADVANCED.ipynb  # ⭐ Model 1
-│   ├── 04_model2_advice_generation.ipynb    # ⭐ Model 2
-│   └── 05_model3_pace_analysis.ipynb        # ⭐ Model 3
+│   ├── 03_model1_clustering_ADVANCED.ipynb  
+│   ├── 04_model2_advice_generation.ipynb        # ⭐ Model 2
+│   ├── 05_model3_pace_analysis.ipynb        
+│   ├── 06_model1_persona_classification.ipynb   # ⭐ Model 1
+│   └── 07_model3_pace_classification.ipynb      # ⭐ Model 3
 │
 ├── 📁 src/                     # Source code
 │   ├── 📁 api/                 # ⭐ API FILES
@@ -163,6 +230,7 @@ ML/
 │
 ├── 📄 API_DOCUMENTATION.md               # ⭐ Dokumentasi API lengkap
 ├── 📄 BACKEND_FEATURE_CALCULATION_GUIDE.md  # ⭐ Cara hitung fitur dari DB
+├── 📄 BACKEND_INTEGRATION_NODEJS.md         # ⭐ Contoh integrasi Node.js
 ├── .env.example               # Template environment variables
 ├── requirements.txt           # Python dependencies
 └── README.md                  # File ini!
@@ -175,6 +243,7 @@ ML/
 | **README.md** | Semua orang | Overview project (file ini) |
 | **API_DOCUMENTATION.md** | Backend + Frontend | Dokumentasi API lengkap |
 | **BACKEND_FEATURE_CALCULATION_GUIDE.md** | Backend | ⭐ Cara hitung fitur dari database! |
+| **BACKEND_INTEGRATION_NODEJS.md** | Backend (Node.js) | ⭐ Contoh lengkap integrasi Express.js |
 
 ---
 
@@ -220,9 +289,9 @@ Output jika berhasil:
 ============================================================
 🚀 Starting AI Learning Insight API v1.1.0...
 ============================================================
-✓ Clustering model loaded
-✓ Pace model loaded  
-✓ Gemini AI configured
+[OK] Classification model loaded from models/persona_classifier.pkl
+[OK] Pace classification model loaded from models/pace_classifier.pkl
+[OK] Gemini AI configured
 ✅ All models loaded successfully!
 📝 API Documentation: http://localhost:8000/docs
 ============================================================
@@ -279,7 +348,7 @@ Content-Type: application/json
 {
   "user_id": 123,
   "persona_label": "The Night Owl",
-  "cluster_id": 4,
+  "cluster_id": 2,
   "confidence": 0.85,
   "description": "Night-time Learner - Aktif belajar di malam hari",
   "characteristics": [
@@ -392,12 +461,12 @@ Frontend → Backend → ML API → Response → Backend → Frontend
 
 ## 📊 Model Performance
 
-| Model | Metrik | Score |
-|-------|--------|-------|
-| Model 1 (Clustering) | Silhouette Score | 0.78 |
-| Model 3 (Pace) | Silhouette Score | 0.65+ |
-| API Response Time (Model 1 & 3) | Latency | ~50-100ms |
-| API Response Time (Model 2 with Gemini) | Latency | ~1-3 detik |
+| Model | Metrik | Score | Tipe |
+|-------|--------|-------|------|
+| Model 1 (Persona) | Accuracy | ~85% | Classification (Random Forest) |
+| Model 3 (Pace) | Accuracy | ~90% | Classification (Random Forest) |
+| API Response Time (Model 1 & 3) | Latency | ~50-100ms | - |
+| API Response Time (Model 2 with Gemini) | Latency | ~1-3 detik | - |
 
 ---
 
@@ -422,9 +491,22 @@ Frontend → Backend → ML API → Response → Backend → Frontend
 ### Q: Port 8000 sudah dipakai?
 **A:** Edit di `main.py` → `uvicorn.run(..., port=8001)`, lalu restart.
 
+### Q: Apa bedanya Classification dan Clustering?
+**A:** 
+- **Clustering (lama):** Model unsupervised, mengelompokkan berdasarkan kemiripan
+- **Classification (baru):** Model supervised, memprediksi label berdasarkan training data yang sudah berlabel
+
 ---
 
 ## 📝 Changelog
+
+### v1.2.0 (2025-12-08)
+- ✅ **UPDATED: Model 1 & 3 dari Clustering → Classification**
+- ✅ Fixed: Mapping class persona sesuai LabelEncoder (0=Consistent, 1=Deep Diver, 2=Night Owl, 3=Sprinter, 4=Struggler)
+- ✅ Fixed: Mapping class pace sesuai LabelEncoder (0=Consistent, 1=Fast, 2=Reflective)
+- ✅ Added: Confidence score dari model Classification
+- ✅ Added: Database Sources & Features section
+- ✅ Updated: Dokumentasi lengkap
 
 ### v1.1.0 (2025-12-05)
 - ✅ Fixed: Pace analysis response null values
@@ -444,6 +526,7 @@ Frontend → Backend → ML API → Response → Backend → Frontend
 - **API Documentation:** http://localhost:8000/docs
 - **API Guide:** `API_DOCUMENTATION.md`
 - **Backend Feature Guide:** `BACKEND_FEATURE_CALCULATION_GUIDE.md`
+- **Node.js Integration:** `BACKEND_INTEGRATION_NODEJS.md`
 - **Test Script:** `python src/test_api.py`
 
 ---
