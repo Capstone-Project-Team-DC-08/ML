@@ -335,14 +335,19 @@ async def generate_advice(request: AdviceRequest):
     """
 )
 async def analyze_pace(request: CoursePaceRequest):
-    """Analyze learning pace untuk user"""
+    """Analyze learning pace untuk user - Updated for Classification Model"""
     try:
-        # Use features if provided
+        # Use features if provided (Classification Model features)
         if request.features:
+            # Features for Classification Model:
+            # completion_speed, study_consistency_std, avg_study_hour, 
+            # completed_modules, total_modules_viewed
             user_data = {
-                'materials_per_day': request.features.materials_per_day,
-                'weekly_cv': request.features.weekly_cv,
-                'completion_speed': request.features.completion_speed
+                'completion_speed': request.features.completion_speed,
+                'study_consistency_std': request.features.study_consistency_std,
+                'avg_study_hour': request.features.avg_study_hour,
+                'completed_modules': request.features.completed_modules,
+                'total_modules_viewed': request.features.total_modules_viewed
             }
             result = pace_service.analyze_pace(user_data)
             
@@ -354,26 +359,27 @@ async def analyze_pace(request: CoursePaceRequest):
             # Calculate additional metrics based on features
             # Estimate pace percentage based on completion speed
             completion_speed = request.features.completion_speed
-            if completion_speed < 0.7:
+            if completion_speed < 0.55:
                 result['pace_percentage'] = round((1 - completion_speed) * 100, 2)
                 result['percentile_rank'] = 85
-            elif completion_speed > 1.3:
+            elif completion_speed > 1.5:
                 result['pace_percentage'] = round((1 - completion_speed) * 100, 2)
                 result['percentile_rank'] = 30
             else:
                 result['pace_percentage'] = round((1 - completion_speed) * 100, 2)
                 result['percentile_rank'] = 50
             
-            # Estimate durations based on materials per day
-            materials_per_day = request.features.materials_per_day
-            # Assume average journey has 30 materials
-            avg_journey_materials = 30
-            result['user_duration_hours'] = round(avg_journey_materials / materials_per_day * 2, 2)  # 2 hours per material
-            result['avg_duration_hours'] = round(avg_journey_materials / 3 * 2, 2)  # Average 3 materials/day
-            result['expected_duration_hours'] = round(avg_journey_materials * 1.5, 2)  # 1.5 hours expected per material
+            # Estimate durations based on completed modules
+            completed_modules = request.features.completed_modules
+            total_modules = request.features.total_modules_viewed
+            if total_modules > 0:
+                progress = completed_modules / total_modules
+                result['user_duration_hours'] = round(completed_modules * 1.5, 2)  # 1.5 hours per module
+                result['avg_duration_hours'] = round(total_modules * 1.5, 2)  # Expected based on total
+                result['expected_duration_hours'] = round(total_modules * 2, 2)  # 2 hours expected per module
             
         else:
-            # Use simple analysis with mock data
+            # Use simple analysis with mock data (fallback)
             journey_stats = {
                 'journey_id': request.journey_id,
                 'journey_name': 'Belajar Machine Learning Pemula',
@@ -391,9 +397,13 @@ async def analyze_pace(request: CoursePaceRequest):
             "journey_id": result.get('journey_id', request.journey_id),
             "journey_name": result.get('journey_name', f"Journey {request.journey_id}"),
             "pace_label": result.get('pace_label', 'consistent learner'),
-            "cluster_id": result.get('cluster_id', 1),
+            "cluster_id": result.get('cluster_id', 0),
             "insight": insight
         }
+        
+        # Add confidence if available (from Classification model)
+        if 'confidence' in result:
+            response_data['confidence'] = result['confidence']
         
         # Add scores if available
         if 'scores' in result:
@@ -487,11 +497,13 @@ async def get_complete_insights(
         }
         persona_result = persona_service.predict_persona(user_data)
         
-        # 2. Get Pace
+        # 2. Get Pace (using Classification Model features)
         pace_data = {
-            'materials_per_day': 6.0,
-            'weekly_cv': 0.3,
-            'completion_speed': 0.8
+            'completion_speed': 0.3,
+            'study_consistency_std': 50.0,
+            'avg_study_hour': 14.0,
+            'completed_modules': 50,
+            'total_modules_viewed': 60
         }
         pace_result = pace_service.analyze_pace(pace_data)
         pace_insight = pace_service.get_pace_insight_text(pace_result)

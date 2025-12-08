@@ -169,21 +169,31 @@ class AdviceResponse(BaseModel):
 # ============================================
 
 class PaceFeatures(BaseModel):
-    """Fitur untuk analisis pace belajar"""
-    materials_per_day: float = Field(
-        default=3.0,
-        ge=0,
-        description="Jumlah materi yang diselesaikan per hari"
-    )
-    weekly_cv: float = Field(
-        default=0.5,
-        ge=0,
-        description="Coefficient of variation aktivitas mingguan"
-    )
+    """Fitur untuk analisis pace belajar - UPDATED untuk Classification Model"""
     completion_speed: float = Field(
         default=1.0,
         ge=0,
-        description="Kecepatan penyelesaian course"
+        description="Kecepatan penyelesaian (rasio vs ekspektasi)"
+    )
+    study_consistency_std: float = Field(
+        default=100.0,
+        ge=0,
+        description="Standar deviasi konsistensi belajar"
+    )
+    avg_study_hour: float = Field(
+        default=14.0,
+        ge=0, le=24,
+        description="Rata-rata jam belajar (0-24)"
+    )
+    completed_modules: int = Field(
+        default=30,
+        ge=0,
+        description="Jumlah modul yang diselesaikan"
+    )
+    total_modules_viewed: int = Field(
+        default=50,
+        ge=0,
+        description="Total modul yang dilihat"
     )
 
 
@@ -203,9 +213,11 @@ class CoursePaceRequest(BaseModel):
                 "user_id": 123,
                 "journey_id": 45,
                 "features": {
-                    "materials_per_day": 6.5,
-                    "weekly_cv": 0.3,
-                    "completion_speed": 0.8
+                    "completion_speed": 0.3,
+                    "study_consistency_std": 50.0,
+                    "avg_study_hour": 14.0,
+                    "completed_modules": 50,
+                    "total_modules_viewed": 60
                 }
             }
         }

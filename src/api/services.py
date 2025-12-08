@@ -17,39 +17,49 @@ import os
 import google.generativeai as genai
 from dotenv import load_dotenv
 
-# Load environment variables
-load_dotenv()
-
 # Konfigurasi path model
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
 MODELS_DIR = os.path.join(BASE_DIR, "models")
+
+# Load environment variables from root .env file
+ENV_PATH = os.path.join(BASE_DIR, ".env")
+load_dotenv(dotenv_path=ENV_PATH)
 
 
 class ModelService:
     """Base service class untuk loading dan managing models"""
     
     def __init__(self):
+        # Persona model attributes
         self.clustering_model = None
         self.clustering_scaler = None
-        self.persona_detector = None  # NEW: Rule-based persona detector
-        self.feature_columns = None   # NEW: Feature columns from training
+        self.label_encoder = None        # For classification model
+        self.persona_mapping = None      # Cluster to persona label mapping
+        self.feature_columns = None      # Feature columns from training
+        self.model_type = None           # 'classification' or 'clustering'
         
+        # Pace model attributes
         self.pace_model = None
-        self.pace_cluster_labels = None  # NEW: Pace labels mapping
-        self.pace_thresholds = None      # NEW: Feature thresholds
+        self.pace_scaler = None          # For pace classification
+        self.pace_label_encoder = None   # For pace classification
+        self.pace_cluster_labels = None  # Pace labels mapping
+        self.pace_feature_columns = None # Feature columns for pace
+        self.pace_thresholds = None      # Feature thresholds (clustering)
+        self.pace_model_type = None      # 'classification' or 'clustering'
         
         self.gemini_api_key = os.getenv("GEMINI_API_KEY", "")
         
-        # Persona mapping - UPDATED sesuai dengan Model 1 yang diperbaiki
+        # Persona mapping - FIXED to match Classification Model's LabelEncoder order
+        # Model mapping: 0=The Consistent, 1=The Deep Diver, 2=The Night Owl, 3=The Sprinter, 4=The Struggler
         self.persona_map = {
             0: {
-                "label": "The Sprinter",
-                "description": "Fast Learner - Cepat menyelesaikan materi dengan nilai tinggi",
-                "criteria": "completion_speed rendah + avg_exam_score tinggi",
+                "label": "The Consistent",
+                "description": "Steady Learner - Belajar rutin dan teratur",
+                "criteria": "study_consistency_std rendah",
                 "characteristics": [
-                    "Menyelesaikan course lebih cepat dari rata-rata",
-                    "Nilai ujian konsisten tinggi",
-                    "Efisien dalam mengerjakan submission"
+                    "Pola belajar sangat konsisten",
+                    "Durasi belajar stabil setiap hari/minggu",
+                    "Disiplin dan terencana"
                 ]
             },
             1: {
@@ -63,26 +73,6 @@ class ModelService:
                 ]
             },
             2: {
-                "label": "The Struggler",
-                "description": "Need Support - Membutuhkan bantuan ekstra",
-                "criteria": "avg_exam_score rendah + submission_fail_rate tinggi",
-                "characteristics": [
-                    "Sering mengalami kesulitan dalam ujian",
-                    "Tingkat kegagalan submission relatif tinggi",
-                    "Membutuhkan dukungan dan bimbingan lebih"
-                ]
-            },
-            3: {
-                "label": "The Consistent",
-                "description": "Steady Learner - Belajar rutin dan teratur",
-                "criteria": "study_consistency_std rendah",
-                "characteristics": [
-                    "Pola belajar sangat konsisten",
-                    "Durasi belajar stabil setiap hari/minggu",
-                    "Disiplin dan terencana"
-                ]
-            },
-            4: {
                 "label": "The Night Owl",
                 "description": "Night-time Learner - Aktif belajar di malam hari",
                 "criteria": "avg_study_hour >= 19",
@@ -91,13 +81,34 @@ class ModelService:
                     "Konsistensi belajar cukup baik",
                     "Produktif di waktu malam"
                 ]
+            },
+            3: {
+                "label": "The Sprinter",
+                "description": "Fast Learner - Cepat menyelesaikan materi dengan nilai tinggi",
+                "criteria": "completion_speed rendah + avg_exam_score tinggi",
+                "characteristics": [
+                    "Menyelesaikan course lebih cepat dari rata-rata",
+                    "Nilai ujian konsisten tinggi",
+                    "Efisien dalam mengerjakan submission"
+                ]
+            },
+            4: {
+                "label": "The Struggler",
+                "description": "Need Support - Membutuhkan bantuan ekstra",
+                "criteria": "avg_exam_score rendah + submission_fail_rate tinggi",
+                "characteristics": [
+                    "Sering mengalami kesulitan dalam ujian",
+                    "Tingkat kegagalan submission relatif tinggi",
+                    "Membutuhkan dukungan dan bimbingan lebih"
+                ]
             }
         }
         
-        # Pace labels mapping - UPDATED sesuai dengan Model 3 yang diperbaiki
+        # Pace labels mapping - FIXED to match Classification Model's LabelEncoder order
+        # Model mapping: 0=consistent learner, 1=fast learner, 2=reflective learner
         self.pace_label_map = {
-            0: "fast learner",
-            1: "consistent learner", 
+            0: "consistent learner",
+            1: "fast learner", 
             2: "reflective learner"
         }
         
@@ -105,41 +116,92 @@ class ModelService:
         """Load semua model yang diperlukan"""
         try:
             # ================================================
-            # Load Clustering Model (Model 1)
+            # Load Persona Model (Model 1)
+            # Priority: Classification model > Clustering model
             # ================================================
+            
+            # Try loading Classification model first (NEW - more accurate)
+            classifier_path = os.path.join(MODELS_DIR, "persona_classifier.pkl")
             clustering_path = os.path.join(MODELS_DIR, "clustering_model_production.pkl")
-            if os.path.exists(clustering_path):
+            
+            if os.path.exists(classifier_path):
+                loaded = joblib.load(classifier_path)
+                
+                # Classification model format
+                self.clustering_model = loaded.get('model')  # RandomForest classifier
+                self.clustering_scaler = loaded.get('scaler')
+                self.label_encoder = loaded.get('label_encoder')
+                self.persona_mapping = loaded.get('persona_mapping')
+                self.feature_columns = loaded.get('feature_columns', [
+                    'avg_study_hour', 'study_consistency_std', 'completion_speed',
+                    'avg_exam_score', 'submission_fail_rate', 'retry_count'
+                ])
+                self.model_type = loaded.get('model_type', 'classification')
+                
+                print(f"[OK] Classification model loaded from {classifier_path}")
+                print(f"  - Model type: {self.model_type}")
+                print(f"  - Scaler: {'Yes' if self.clustering_scaler else 'No'}")
+                print(f"  - Persona mapping: {self.persona_mapping}")
+                print(f"  - Features: {self.feature_columns}")
+                
+            elif os.path.exists(clustering_path):
+                # Fallback to clustering model
                 loaded = joblib.load(clustering_path)
                 
                 if isinstance(loaded, dict):
-                    # Extract components from saved dictionary
                     self.clustering_model = loaded.get('clustering_model')
                     self.clustering_scaler = loaded.get('scaler')
-                    self.persona_detector = loaded.get('persona_detector')
+                    self.persona_mapping = loaded.get('persona_mapping')
                     self.feature_columns = loaded.get('feature_columns', [
                         'avg_study_hour', 'study_consistency_std', 'completion_speed',
                         'avg_exam_score', 'submission_fail_rate', 'retry_count'
                     ])
-                    
-                    print(f"✓ Clustering model loaded from {clustering_path}")
-                    print(f"  - Scaler: {'Yes' if self.clustering_scaler else 'No'}")
-                    print(f"  - Persona detector: {'Yes' if self.persona_detector else 'No'}")
-                    print(f"  - Features: {self.feature_columns}")
                 else:
                     self.clustering_model = loaded
+                    self.persona_mapping = None
                     self.feature_columns = [
                         'avg_study_hour', 'study_consistency_std', 'completion_speed',
                         'avg_exam_score', 'submission_fail_rate', 'retry_count'
                     ]
-                    print(f"✓ Clustering model loaded from {clustering_path} (legacy format)")
+                
+                self.model_type = 'clustering'
+                print(f"[OK] Clustering model loaded from {clustering_path} (fallback)")
+                print(f"  - Model type: {self.model_type}")
             else:
-                print(f"⚠ Clustering model not found at {clustering_path}")
+                print(f"[WARN] No persona model found")
             
             # ================================================
             # Load Pace Model (Model 3)
+            # Priority: Classification model > Clustering model
             # ================================================
+            pace_classifier_path = os.path.join(MODELS_DIR, "pace_classifier.pkl")
             pace_path = os.path.join(MODELS_DIR, "pace_model.pkl")
-            if os.path.exists(pace_path):
+            
+            if os.path.exists(pace_classifier_path):
+                # NEW: Classification model (more accurate)
+                loaded = joblib.load(pace_classifier_path)
+                
+                self.pace_model = loaded.get('model')  # RandomForest classifier
+                self.pace_scaler = loaded.get('scaler')
+                self.pace_label_encoder = loaded.get('label_encoder')
+                self.pace_cluster_labels = loaded.get('pace_mapping', {
+                    0: 'consistent learner',
+                    1: 'fast learner',
+                    2: 'reflective learner'
+                })
+                self.pace_feature_columns = loaded.get('feature_columns', [
+                    'completion_speed', 'study_consistency_std', 'avg_study_hour',
+                    'completed_modules', 'total_modules_viewed'
+                ])
+                self.pace_model_type = loaded.get('model_type', 'classification')
+                
+                print(f"[OK] Pace classification model loaded from {pace_classifier_path}")
+                print(f"  - Model type: {self.pace_model_type}")
+                print(f"  - Pace mapping: {self.pace_cluster_labels}")
+                print(f"  - Features: {self.pace_feature_columns}")
+                
+            elif os.path.exists(pace_path):
+                # Fallback to clustering model
                 loaded = joblib.load(pace_path)
                 
                 if isinstance(loaded, dict):
@@ -150,39 +212,27 @@ class ModelService:
                         2: 'reflective learner'
                     })
                     self.pace_thresholds = loaded.get('feature_thresholds', {})
-                    
-                    print(f"✓ Pace model loaded from {pace_path}")
-                    print(f"  - Cluster labels: {self.pace_cluster_labels}")
-                    print(f"  - Thresholds: {list(self.pace_thresholds.keys()) if self.pace_thresholds else 'None'}")
                 else:
                     self.pace_model = loaded
-                    print(f"✓ Pace model loaded from {pace_path} (legacy format)")
+                
+                self.pace_model_type = 'clustering'
+                print(f"[OK] Pace clustering model loaded from {pace_path} (fallback)")
+                print(f"  - Model type: {self.pace_model_type}")
             else:
-                # Fallback to pace_model_production.pkl
-                pace_prod_path = os.path.join(MODELS_DIR, "pace_model_production.pkl")
-                if os.path.exists(pace_prod_path):
-                    loaded = joblib.load(pace_prod_path)
-                    if isinstance(loaded, dict):
-                        self.pace_model = loaded.get('model') or loaded.get('kmeans')
-                        self.pace_cluster_labels = loaded.get('cluster_labels', self.pace_label_map)
-                    else:
-                        self.pace_model = loaded
-                    print(f"✓ Pace model loaded from {pace_prod_path}")
-                else:
-                    print(f"⚠ Pace model not found")
+                print(f"[WARN] No pace model found")
                 
             # ================================================
             # Configure Gemini AI (Model 2)
             # ================================================
             if self.gemini_api_key:
                 genai.configure(api_key=self.gemini_api_key)
-                print("✓ Gemini AI configured")
+                print("[OK] Gemini AI configured")
             else:
-                print("⚠ GEMINI_API_KEY not found in environment variables")
+                print("[WARN] GEMINI_API_KEY not found in environment variables")
                 
             return True
         except Exception as e:
-            print(f"✗ Error loading models: {str(e)}")
+            print(f"[ERROR] Error loading models: {str(e)}")
             import traceback
             traceback.print_exc()
             return False
@@ -203,8 +253,8 @@ class PersonaService(ModelService):
         """
         Prediksi persona user berdasarkan data dari database
         
-        UPDATED: Menggunakan rule-based persona assignment sesuai dengan
-        kriteria yang didefinisikan di Model 1 yang sudah diperbaiki.
+        FIXED: Menggunakan ML Model sebagai PRIMARY method.
+        Rule-based hanya digunakan sebagai FALLBACK jika model tidak tersedia.
         
         Args:
             user_data: Dict berisi fitur user dari database
@@ -226,53 +276,25 @@ class PersonaService(ModelService):
         submission_fail_rate = user_data.get('submission_fail_rate', 0.1)
         retry_count = user_data.get('retry_count', 0)
         
-        # ================================================
-        # Rule-based Persona Assignment (sesuai Model 1)
-        # ================================================
-        # Priority order:
-        # 1. The Night Owl (jam belajar >= 19)
-        # 2. The Struggler (skor rendah + fail rate tinggi)
-        # 3. The Sprinter (cepat + skor tinggi)
-        # 4. The Deep Diver (lambat + skor tinggi)
-        # 5. The Consistent (konsistensi tinggi / default)
-        
-        persona_label = "The Consistent"  # Default
-        cluster_id = 3
+        # Default values (untuk fallback rule-based)
+        # Note: cluster_id 0 = The Consistent berdasarkan LabelEncoder model
+        persona_label = "The Consistent"
+        cluster_id = 0
         confidence = 0.7
         
-        # Check Night Owl first (jam malam)
-        if avg_study_hour >= 19:
-            persona_label = "The Night Owl"
-            cluster_id = 4
-            confidence = 0.85
-            
-        # Check Struggler (kesulitan belajar)
-        elif avg_exam_score < 60 and submission_fail_rate > 0.3:
-            persona_label = "The Struggler"
-            cluster_id = 2
-            confidence = 0.8
-            
-        # Check Sprinter (cepat dan bagus)
-        elif completion_speed < 0.5 and avg_exam_score >= 75:
-            persona_label = "The Sprinter"
-            cluster_id = 0
-            confidence = 0.85
-            
-        # Check Deep Diver (lambat tapi bagus)
-        elif completion_speed > 2.0 and avg_exam_score >= 70:
-            persona_label = "The Deep Diver"
-            cluster_id = 1
-            confidence = 0.8
-            
-        # Check Consistent (jam stabil)
-        elif study_consistency_std < 100:
-            persona_label = "The Consistent"
-            cluster_id = 3
-            confidence = 0.75
-        
-        # Fallback: Use clustering model if available
+        # ================================================
+        # PRIMARY: Use ML Model if available
+        # ================================================
         if self.clustering_model is not None:
             try:
+                import pandas as pd
+                
+                # Create DataFrame with proper feature names
+                feature_names = self.feature_columns or [
+                    'avg_study_hour', 'study_consistency_std', 'completion_speed',
+                    'avg_exam_score', 'submission_fail_rate', 'retry_count'
+                ]
+                
                 features = [
                     avg_study_hour,
                     study_consistency_std, 
@@ -282,32 +304,121 @@ class PersonaService(ModelService):
                     retry_count
                 ]
                 
-                X = np.array(features).reshape(1, -1)
+                X = pd.DataFrame([features], columns=feature_names)
                 
                 # Apply scaler if available
                 if self.clustering_scaler is not None:
-                    X = self.clustering_scaler.transform(X)
+                    X_scaled = self.clustering_scaler.transform(X)
+                else:
+                    X_scaled = X.values
                 
-                # Get cluster prediction
-                predicted_cluster = int(self.clustering_model.predict(X)[0])
+                # Get prediction from ML model
+                predicted_class = int(self.clustering_model.predict(X_scaled)[0])
                 
-                # Map to persona
-                persona_info = self.persona_map.get(predicted_cluster, self.persona_map[3])
-                
-                # Calculate confidence from distance
-                if hasattr(self.clustering_model, 'transform'):
-                    distances = self.clustering_model.transform(X)[0]
-                    min_distance = distances[predicted_cluster]
+                # Get confidence using predict_proba (Classification model)
+                if hasattr(self.clustering_model, 'predict_proba'):
+                    # Classification model - use probability
+                    proba = self.clustering_model.predict_proba(X_scaled)[0]
+                    confidence = float(proba[predicted_class])
+                    model_type = 'classification'
+                elif hasattr(self.clustering_model, 'transform'):
+                    # Clustering model - use distance
+                    distances = self.clustering_model.transform(X_scaled)[0]
+                    min_distance = distances[predicted_class]
                     max_distance = np.max(distances)
                     confidence = 1 - (min_distance / max_distance) if max_distance > 0 else 0.75
+                    model_type = 'clustering'
+                else:
+                    confidence = 0.85
+                    model_type = 'unknown'
                 
-                cluster_id = predicted_cluster
-                persona_label = persona_info["label"]
+                # Get persona label from mapping
+                if hasattr(self, 'persona_mapping') and self.persona_mapping:
+                    persona_label = self.persona_mapping.get(predicted_class, "The Consistent")
+                elif hasattr(self, 'label_encoder') and self.label_encoder:
+                    persona_label = self.label_encoder.inverse_transform([predicted_class])[0]
+                else:
+                    persona_info = self.persona_map.get(predicted_class, self.persona_map[3])
+                    persona_label = persona_info["label"]
+                
+                cluster_id = predicted_class
+                
+                print(f"[{model_type.upper()}] Predicted: {persona_label} (confidence: {confidence:.2%})")
+                
+                # ================================================
+                # POST-PROCESSING: Rule-Based Override
+                # Override ML prediction for clear-cut cases
+                # ================================================
+                override_applied = False
+                
+                # Night Owl override (critical: study hour is definitive)
+                if avg_study_hour >= 19 and persona_label != "The Night Owl":
+                    persona_label = "The Night Owl"
+                    cluster_id = 2  # Based on new mapping
+                    confidence = 0.90
+                    override_applied = True
+                    print(f"[OVERRIDE] Night Owl detected (avg_study_hour={avg_study_hour})")
+                
+                # Struggler override (critical: low score + high fail rate)
+                elif avg_exam_score < 60 and submission_fail_rate > 0.3 and persona_label != "The Struggler":
+                    persona_label = "The Struggler"
+                    cluster_id = 4
+                    confidence = 0.85
+                    override_applied = True
+                    print(f"[OVERRIDE] Struggler detected (score={avg_exam_score}, fail_rate={submission_fail_rate})")
+                
+                # Sprinter override (critical: fast + high score)
+                elif completion_speed < 0.4 and avg_exam_score >= 80 and persona_label != "The Sprinter":
+                    persona_label = "The Sprinter"
+                    cluster_id = 3
+                    confidence = 0.85
+                    override_applied = True
+                    print(f"[OVERRIDE] Sprinter detected (speed={completion_speed}, score={avg_exam_score})")
                 
             except Exception as e:
-                print(f"Fallback to rule-based: {e}")
+                print(f"[ML Model] Error: {e}, falling back to rule-based")
+                import traceback
+                traceback.print_exc()
+                # Fall through to rule-based below
+                self.clustering_model = None  # Reset to use fallback
         
-        # Get persona info
+        # ================================================
+        # FALLBACK: Rule-based Persona Assignment
+        # Only used if ML model is not available or failed
+        # ================================================
+        if self.clustering_model is None:
+            print("[Rule-Based] Using rule-based persona assignment as fallback")
+            
+            # Priority order based on criteria from notebook
+            if avg_study_hour >= 19:
+                persona_label = "The Night Owl"
+                cluster_id = 2
+                confidence = 0.85
+            elif avg_exam_score < 60 and submission_fail_rate > 0.3:
+                persona_label = "The Struggler"
+                cluster_id = 4
+                confidence = 0.8
+            elif completion_speed < 0.5 and avg_exam_score >= 75:
+                persona_label = "The Sprinter"
+                cluster_id = 3
+                confidence = 0.85
+            elif completion_speed > 2.0 and avg_exam_score >= 70:
+                persona_label = "The Deep Diver"
+                cluster_id = 1
+                confidence = 0.8
+            else:
+                persona_label = "The Consistent"
+                cluster_id = 0
+                confidence = 0.75
+        
+        # Get cluster_id from persona_label if we have mapping
+        if hasattr(self, 'persona_mapping') and self.persona_mapping:
+            for cid, label in self.persona_mapping.items():
+                if label == persona_label:
+                    cluster_id = cid
+                    break
+        
+        # Get persona info for response
         persona_info = self.persona_map.get(cluster_id, self.persona_map[3])
         
         return {
@@ -534,66 +645,115 @@ class PaceService(ModelService):
         """
         Analisis kecepatan belajar user
         
-        UPDATED: Menggunakan binary features sesuai dengan Model 3 yang diperbaiki:
-        - fast_score: Apakah user fast learner
-        - consistent_score: Apakah user consistent learner  
-        - reflective_score: Apakah user reflective learner
+        UPDATED: Menggunakan Classification model sebagai primary.
         
         Args:
             user_data: Dict berisi data user:
-                - materials_per_day: Jumlah materi per hari
-                - weekly_cv: Coefficient of variation mingguan
                 - completion_speed: Kecepatan penyelesaian
+                - study_consistency_std: Standar deviasi konsistensi
+                - avg_study_hour: Jam belajar rata-rata
+                - completed_modules: Jumlah modul selesai
+                - total_modules_viewed: Total modul dilihat
                 
         Returns:
             Dict berisi pace analysis results
         """
-        materials_per_day = user_data.get('materials_per_day', 3.0)
-        weekly_cv = user_data.get('weekly_cv', 0.5)
+        # Extract features
         completion_speed = user_data.get('completion_speed', 1.0)
+        study_consistency_std = user_data.get('study_consistency_std', 100.0)
+        avg_study_hour = user_data.get('avg_study_hour', 14.0)
+        completed_modules = user_data.get('completed_modules', 30)
+        total_modules_viewed = user_data.get('total_modules_viewed', 50)
         
-        # Thresholds sesuai dengan Model 3
-        min_materials_per_day = self.pace_thresholds.get('min_materials_per_day', 5) if self.pace_thresholds else 5
-        cv_median = self.pace_thresholds.get('cv_median', 0.5) if self.pace_thresholds else 0.5
+        # Default values
+        pace_label = "consistent learner"
+        cluster_id = 0
+        confidence = 0.7
         
-        # Calculate binary scores
-        fast_score = 1 if materials_per_day >= min_materials_per_day else 0
-        consistent_score = 1 if weekly_cv <= cv_median else 0
-        reflective_score = 1 if completion_speed > 1.5 else 0
-        
-        # Determine pace label based on scores
-        if fast_score == 1 and consistent_score == 1:
-            pace_label = "fast learner"
-            cluster_id = 0
-        elif consistent_score == 1:
-            pace_label = "consistent learner"
-            cluster_id = 1
-        else:
-            pace_label = "reflective learner"
-            cluster_id = 2
-        
-        # Use model if available
-        if self.pace_model is not None:
+        # ================================================
+        # PRIMARY: Use Classification Model if available
+        # ================================================
+        if self.pace_model is not None and self.pace_model_type == 'classification':
             try:
-                features = np.array([[fast_score, consistent_score, reflective_score]])
-                predicted_cluster = int(self.pace_model.predict(features)[0])
-                pace_label = self.pace_cluster_labels.get(predicted_cluster, "consistent learner")
-                cluster_id = predicted_cluster
+                import pandas as pd
+                
+                # Create DataFrame with proper feature names
+                feature_names = self.pace_feature_columns or [
+                    'completion_speed', 'study_consistency_std', 'avg_study_hour',
+                    'completed_modules', 'total_modules_viewed'
+                ]
+                
+                features = [
+                    completion_speed,
+                    study_consistency_std,
+                    avg_study_hour,
+                    completed_modules,
+                    total_modules_viewed
+                ]
+                
+                X = pd.DataFrame([features], columns=feature_names)
+                
+                # Apply scaler
+                if self.pace_scaler is not None:
+                    X_scaled = self.pace_scaler.transform(X)
+                else:
+                    X_scaled = X.values
+                
+                # Get prediction
+                predicted_class = int(self.pace_model.predict(X_scaled)[0])
+                
+                # Get confidence using predict_proba
+                if hasattr(self.pace_model, 'predict_proba'):
+                    proba = self.pace_model.predict_proba(X_scaled)[0]
+                    confidence = float(proba[predicted_class])
+                else:
+                    confidence = 0.85
+                
+                # Get pace label
+                if self.pace_cluster_labels:
+                    pace_label = self.pace_cluster_labels.get(predicted_class, "consistent learner")
+                elif self.pace_label_encoder:
+                    pace_label = self.pace_label_encoder.inverse_transform([predicted_class])[0]
+                
+                cluster_id = predicted_class
+                
+                print(f"[CLASSIFICATION] Pace: {pace_label} (confidence: {confidence:.2%})")
+                
             except Exception as e:
-                print(f"Fallback to rule-based pace: {e}")
+                print(f"[Pace Model] Error: {e}, falling back to rule-based")
+                import traceback
+                traceback.print_exc()
+        
+        # ================================================
+        # FALLBACK: Rule-based Pace Assignment
+        # ================================================
+        elif self.pace_model is None or self.pace_model_type != 'classification':
+            # Fast Learner: cepat menyelesaikan
+            if completion_speed < 0.55:
+                pace_label = "fast learner"
+                cluster_id = 1
+                confidence = 0.85
+            # Reflective Learner: lebih lambat, lebih mendalam
+            elif completion_speed > 1.5:
+                pace_label = "reflective learner"
+                cluster_id = 2
+                confidence = 0.80
+            # Consistent Learner: default
+            else:
+                pace_label = "consistent learner"
+                cluster_id = 0
+                confidence = 0.75
+            
+            print(f"[RULE-BASED] Pace: {pace_label}")
         
         return {
             "pace_label": pace_label,
             "cluster_id": cluster_id,
-            "scores": {
-                "fast_score": fast_score,
-                "consistent_score": consistent_score,
-                "reflective_score": reflective_score
-            },
+            "confidence": round(float(confidence), 3),
             "metrics": {
-                "materials_per_day": round(materials_per_day, 2),
-                "weekly_cv": round(weekly_cv, 3),
-                "completion_speed": round(completion_speed, 2)
+                "completion_speed": round(completion_speed, 2),
+                "study_consistency_std": round(study_consistency_std, 2),
+                "avg_study_hour": round(avg_study_hour, 2)
             }
         }
     
