@@ -14,7 +14,7 @@ import pandas as pd
 from datetime import datetime
 from typing import Dict, List, Optional, Tuple
 import os
-import google.generativeai as genai
+from openai import OpenAI
 from dotenv import load_dotenv
 
 # Konfigurasi path model
@@ -49,6 +49,15 @@ class ModelService:
         
         self.gemini_api_key = os.getenv("GEMINI_API_KEY", "")
         
+        # Initialize OpenRouter client
+        if self.gemini_api_key:
+            self.openrouter_client = OpenAI(
+                base_url="https://openrouter.ai/api/v1",
+                api_key=self.gemini_api_key
+            )
+        else:
+            self.openrouter_client = None
+        
         # Persona mapping - FIXED to match Classification Model's LabelEncoder order
         # Model mapping: 0=The Consistent, 1=The Deep Diver, 2=The Night Owl, 3=The Sprinter, 4=The Struggler
         self.persona_map = {
@@ -74,12 +83,12 @@ class ModelService:
             },
             2: {
                 "label": "The Night Owl",
-                "description": "Night-time Learner - Aktif belajar di malam/dini hari",
-                "criteria": "avg_study_hour >= 19 OR avg_study_hour < 6",
+                "description": "Night-time Learner - Aktif belajar di malam hari",
+                "criteria": "avg_study_hour >= 19",
                 "characteristics": [
-                    "Mayoritas aktivitas belajar di jam 19:00 - 06:00",
+                    "Mayoritas aktivitas belajar di jam 19:00 - 24:00",
                     "Konsistensi belajar cukup baik",
-                    "Produktif di waktu malam/dini hari"
+                    "Produktif di waktu malam"
                 ]
             },
             3: {
@@ -222,12 +231,16 @@ class ModelService:
                 print(f"[WARN] No pace model found")
                 
             # ================================================
-            # Configure Gemini AI (Model 2)
+            # Configure OpenRouter AI (Model 2)
             # ================================================
             if self.gemini_api_key:
-                genai.configure(api_key=self.gemini_api_key)
-                print("[OK] Gemini AI configured")
+                self.openrouter_client = OpenAI(
+                    base_url="https://openrouter.ai/api/v1",
+                    api_key=self.gemini_api_key
+                )
+                print("[OK] OpenRouter AI configured")
             else:
+                self.openrouter_client = None
                 print("[WARN] GEMINI_API_KEY not found in environment variables")
                 
             return True
@@ -242,7 +255,7 @@ class ModelService:
         return {
             "clustering_model": self.clustering_model is not None,
             "pace_model": self.pace_model is not None,
-            "advice_generator": bool(self.gemini_api_key)
+            "advice_generator": self.openrouter_client is not None
         }
 
 
@@ -352,8 +365,7 @@ class PersonaService(ModelService):
                 override_applied = False
                 
                 # Night Owl override (critical: study hour is definitive)
-                # UPDATED: Night Owl sekarang mencakup jam 19-24 DAN jam 0-5 (dini hari)
-                if (avg_study_hour >= 19 or avg_study_hour < 6) and persona_label != "The Night Owl":
+                if avg_study_hour >= 19 and avg_study_hour <= 4 and persona_label != "The Night Owl":
                     persona_label = "The Night Owl"
                     cluster_id = 2  # Based on new mapping
                     confidence = 0.90
@@ -391,7 +403,7 @@ class PersonaService(ModelService):
             print("[Rule-Based] Using rule-based persona assignment as fallback")
             
             # Priority order based on criteria from notebook
-            if avg_study_hour >= 19:
+            if avg_study_hour >= 19 and avg_study_hour <= 4:
                 persona_label = "The Night Owl"
                 cluster_id = 2
                 confidence = 0.85
@@ -553,14 +565,18 @@ FOKUS SARAN PACE:
         Returns:
             str: Saran personal yang dihasilkan AI
         """
-        if not self.gemini_api_key:
-            # Fallback ke template-based advice jika Gemini tidak tersedia
+        print(f"[DEBUG] gemini_api_key: {'SET' if self.gemini_api_key else 'NOT SET'}")
+        print(f"[DEBUG] openrouter_client: {self.openrouter_client}")
+        
+        if not self.gemini_api_key or not self.openrouter_client:
+            print("[DEBUG] Falling back to template-based advice")
             return self._generate_template_advice(user_name, persona_label, pace_label)
         
         try:
+            print(additional_context)
+            print("[DEBUG] Calling OpenRouter API...")
             # Build context
             avg_score = additional_context.get('avg_exam_score', 75) if additional_context else 75
-            course_name = additional_context.get('course_name', 'learning journey') if additional_context else 'learning journey'
             
             # Status info dengan emoji
             if avg_score >= 85:
@@ -577,11 +593,10 @@ FOKUS SARAN PACE:
             pace_context = self.PACE_CONTEXTS.get(pace_label.lower(), "")
             
             # Build prompt
-            prompt = f"""Kamu adalah AI Learning Coach untuk platform pembelajaran programming Dicoding.
+            prompt = f"""Kamu adalah AI Learning Coach untuk platform pembelajaran di Pacu Pintar.
 
 DATA SISWA:
 - Nama Siswa: {user_name}
-- Kursus: {course_name}
 - Persona Belajar: {persona_label}
 - Pace Belajar: {pace_label.title()}
 - Rata-rata Score Kuis: {avg_score:.1f}
@@ -604,14 +619,22 @@ FORMAT OUTPUT:
 - Gabungkan insight dari persona DAN pace belajar
 """
             
-            # Generate menggunakan Gemini
-            model = genai.GenerativeModel('gemini-2.0-flash')
-            response = model.generate_content(prompt)
+            # Generate menggunakan OpenRouter
+            print("[DEBUG] Sending request to OpenRouter...")
+            response = self.openrouter_client.chat.completions.create(
+                model="mistralai/devstral-2512:free", #or use model: google/gemini-2.0-flash-001
+                messages=[
+                    {"role": "user", "content": prompt}
+                ]
+            )
             
-            return response.text.strip()
+            result = response.choices[0].message.content.strip()
+            return result
             
         except Exception as e:
-            print(f"Error generating advice with Gemini: {str(e)}")
+            print(f"[DEBUG] Error generating advice with OpenRouter: {str(e)}")
+            import traceback
+            traceback.print_exc()
             return self._generate_template_advice(user_name, persona_label, pace_label)
     
     def _generate_template_advice(self, user_name: str, persona_label: str, pace_label: str = "consistent learner") -> str:
@@ -817,11 +840,11 @@ class PaceService(ModelService):
         pace_label = pace_data.get('pace_label', 'consistent learner')
         
         if pace_label == "fast learner":
-            return "Kamu belajar dengan cepat dan efisien! 🚀"
+            return "Kamu belajar dengan cepat dan efisien! Pertahankan momentum ini."
         elif pace_label == "reflective learner":
-            return "Kamu belajar dengan mendalam dan reflektif - bagus untuk pemahaman! 📚"
+            return "Kamu belajar dengan mendalam dan reflektif - bagus untuk pemahaman konsep!"
         else:
-            return "Kamu belajar dengan konsisten dan teratur - pertahankan ritme ini! ⭐"
+            return "Kamu belajar dengan konsisten dan teratur - pertahankan ritme ini!"
 
 
 # Singleton instances

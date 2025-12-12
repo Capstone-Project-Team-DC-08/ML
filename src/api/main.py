@@ -168,6 +168,7 @@ async def predict_persona(request: PersonaRequest):
                 'submission_fail_rate': request.features.submission_fail_rate,
                 'retry_count': request.features.retry_count
             }
+            print(user_data)
         else:
             # Mock data for demo - tim backend akan mengganti ini
             user_data = {
@@ -199,44 +200,6 @@ async def predict_persona(request: PersonaRequest):
         )
 
 
-@app.post(
-    "/api/v1/persona/batch",
-    response_model=BatchPersonaResponse,
-    tags=["Model 1: Persona Clustering"],
-    summary="Batch Predict Persona Multiple Users",
-    description="Prediksi persona untuk multiple users sekaligus (max 100 users)"
-)
-async def batch_predict_persona(request: BatchPersonaRequest):
-    """Batch prediction untuk multiple users"""
-    try:
-        results = []
-        
-        for user_id in request.user_ids:
-            # Mock data - tim backend akan mengganti dengan query database
-            user_data = {
-                'avg_study_hour': 12.0,
-                'study_consistency_std': 100.0,
-                'completion_speed': 1.0,
-                'avg_exam_score': 75.0,
-                'submission_fail_rate': 0.1,
-                'retry_count': 0
-            }
-            
-            result = persona_service.predict_persona(user_data)
-            results.append(PersonaResponse(user_id=user_id, **result))
-        
-        return BatchPersonaResponse(
-            results=results,
-            total_processed=len(results)
-        )
-        
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Error in batch prediction: {str(e)}"
-        )
-
-
 # ============================================
 # Model 2: Advice Generation Endpoints
 # ============================================
@@ -263,16 +226,18 @@ async def batch_predict_persona(request: BatchPersonaRequest):
 )
 async def generate_advice(request: AdviceRequest):
     """Generate personalized advice untuk user"""
+    print(request)
     try:
         # Get persona if not provided
         persona_label = request.persona_label
         if not persona_label:
+            print("Ok")
             # Predict persona with default data
             user_data = {
                 'avg_study_hour': 14.0,
                 'study_consistency_std': 80.0,
                 'completion_speed': 1.0,
-                'avg_exam_score': request.avg_exam_score or 75.0,
+                'avg_exam_score': request.avg_exam_score,
                 'submission_fail_rate': 0.1,
                 'retry_count': 0
             }
@@ -284,8 +249,7 @@ async def generate_advice(request: AdviceRequest):
         
         # Additional context
         additional_context = {
-            'avg_exam_score': request.avg_exam_score or 75.0,
-            'course_name': request.course_name or 'learning journey'
+            'avg_exam_score': request.avg_exam_score,
         }
         
         # Generate advice
@@ -427,127 +391,6 @@ async def analyze_pace(request: CoursePaceRequest):
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Error analyzing pace: {str(e)}"
-        )
-
-
-@app.get(
-    "/api/v1/pace/{user_id}/summary",
-    tags=["Model 3: Learning Pace"],
-    summary="Get User Overall Pace Summary",
-    description="Get ringkasan pace user untuk semua course yang pernah diambil"
-)
-async def get_pace_summary(user_id: int):
-    """Get overall pace summary untuk user"""
-    try:
-        # Mock data - tim backend akan mengganti dengan query database
-        summary = {
-            "user_id": user_id,
-            "total_courses_completed": 5,
-            "dominant_pace_label": "consistent learner",
-            "pace_distribution": {
-                "fast_learner": 2,
-                "consistent_learner": 2,
-                "reflective_learner": 1
-            },
-            "insight": "Kamu paling sering belajar dengan pace yang konsisten dan teratur!",
-            "courses": []
-        }
-        
-        return summary
-        
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Error getting pace summary: {str(e)}"
-        )
-
-
-# ============================================
-# Combined Insight Endpoint (All Models)
-# ============================================
-
-@app.get(
-    "/api/v1/insights/{user_id}",
-    tags=["Combined Insights"],
-    summary="Get Complete User Insights",
-    description="""
-    Get complete learning insights combining all 3 models:
-    - Persona dari Model 1 (5 tipe)
-    - Personalized Advice dari Model 2 (Gemini AI)
-    - Learning Pace dari Model 3 (3 kategori)
-    
-    Endpoint ini cocok untuk ditampilkan di dashboard user.
-    """
-)
-async def get_complete_insights(
-    user_id: int, 
-    user_name: str = "User",
-    journey_id: Optional[int] = None
-):
-    """Get complete insights untuk user (gabungan 3 model)"""
-    try:
-        # 1. Get Persona
-        user_data = {
-            'avg_study_hour': 21.5,
-            'study_consistency_std': 2.3,
-            'completion_speed': 0.35,
-            'avg_exam_score': 78.5,
-            'submission_fail_rate': 0.15,
-            'retry_count': 1
-        }
-        persona_result = persona_service.predict_persona(user_data)
-        
-        # 2. Get Pace (using Classification Model features)
-        pace_data = {
-            'completion_speed': 0.3,
-            'study_consistency_std': 50.0,
-            'avg_study_hour': 14.0,
-            'completed_modules': 50,
-            'total_modules_viewed': 60
-        }
-        pace_result = pace_service.analyze_pace(pace_data)
-        pace_insight = pace_service.get_pace_insight_text(pace_result)
-        
-        # 3. Generate Advice
-        advice_text = advice_service.generate_advice(
-            user_name=user_name,
-            persona_label=persona_result['persona_label'],
-            pace_label=pace_result.get('pace_label', 'consistent learner'),
-            additional_context={'avg_exam_score': 78.5}
-        )
-        
-        # Combine all
-        complete_insights = {
-            "user_id": user_id,
-            "user_name": user_name,
-            "generated_at": datetime.now().isoformat(),
-            "persona": {
-                "label": persona_result['persona_label'],
-                "cluster_id": persona_result['cluster_id'],
-                "confidence": persona_result['confidence'],
-                "description": persona_result.get('description', ''),
-                "characteristics": persona_result['characteristics']
-            },
-            "learning_pace": {
-                "label": pace_result.get('pace_label', 'consistent learner'),
-                "scores": pace_result.get('scores', {}),
-                "insight": pace_insight
-            },
-            "personalized_advice": {
-                "text": advice_text,
-                "context": {
-                    "persona": persona_result['persona_label'],
-                    "pace": pace_result.get('pace_label', 'consistent learner')
-                }
-            }
-        }
-        
-        return complete_insights
-        
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Error getting complete insights: {str(e)}"
         )
 
 
