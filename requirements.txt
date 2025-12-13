@@ -13,3 +13,4 @@ requests
 pydantic
 python-dotenv
 google-generativeai
+openai
