@@ -169,7 +169,7 @@ class AdviceService:
         pace_desc = self.PACE_DESC.get(pace_label, "belajar dengan baik")
         
         if avg_score < 60:
-            return f"Hai {name}! 🌟 Senang melihat kamu terus berusaha dalam perjalanan belajarmu. Sebagai {pace_label}, kamu {pace_desc}. Nilai quiz ({avg_score:.0f}) masih bisa ditingkatkan - coba teknik active recall dan buat mind map untuk konsep penting. Waktu {optimal_time} adalah golden hour-mu, manfaatkan untuk review materi! Semangat terus, {name}! 💪"
+            return f"Hai {name}! 🌟 Senang melihat kamu terus berusaha dalam perjalanan belajarmu. Sebagai {pace_label}, kamu {pace_desc}. Nilai ujian ({avg_score:.0f}) masih bisa ditingkatkan - coba teknik active recall dan buat mind map untuk konsep penting. Waktu {optimal_time} adalah golden hour-mu, manfaatkan untuk review materi! Semangat terus, {name}! 💪"
         
         if progress < 30 and progress > 0:
             return f"Hai {name}! 🚀 Setiap perjalanan dimulai dari langkah pertama! Sebagai {pace_label}, kamu {pace_desc}. Progress {progress:.0f}% adalah awal yang bagus - tetapkan target 1-2 modul per hari. Waktu {optimal_time} adalah saat terbaikmu untuk fokus. Terus konsisten, {name}! 💪"
@@ -200,11 +200,11 @@ class AdviceService:
         
         # Score analysis
         if avg_score >= 85:
-            strengths.append(f"nilai quiz impresif ({avg_score:.0f}/100)")
+            strengths.append(f"nilai ujian impresif ({avg_score:.0f}/100)")
         elif avg_score >= 70:
-            strengths.append(f"nilai quiz solid ({avg_score:.0f}/100)")
+            strengths.append(f"nilai ujian solid ({avg_score:.0f}/100)")
         elif avg_score >= 50:
-            growth_areas.append("tingkatkan nilai quiz dengan review materi")
+            growth_areas.append("tingkatkan nilai ujian dengan review materi")
         else:
             growth_areas.append("perkuat fondasi dengan review materi dasar")
         
@@ -245,7 +245,7 @@ PROFIL SISWA:
 - Tipe: {pace_label} {config['emoji']} ({pace_desc})
 - Waktu Optimal: {optimal_time}
 - Progress: {completed_modules}/{total_modules} modul ({progress:.0f}%)
-- Nilai Quiz: {avg_score:.0f}/100
+- Nilai Ujian: {avg_score:.0f}
 - Kelas Selesai: {courses_completed}/{total_courses}
 
 KELEBIHAN: {strengths_text}
