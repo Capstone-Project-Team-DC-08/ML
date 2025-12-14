@@ -4,7 +4,7 @@
 
 [![Python](https://img.shields.io/badge/Python-3.8+-blue.svg)](https://www.python.org/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.104+-green.svg)](https://fastapi.tiangolo.com/)
-[![API Version](https://img.shields.io/badge/API-v1.2.0-brightgreen.svg)](#)
+[![API Version](https://img.shields.io/badge/API-v1.3.0-brightgreen.svg)](#)
 [![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 ---
@@ -26,17 +26,17 @@
 
 ## 🎯 Tentang Project
 
-Project ini adalah sistem Machine Learning untuk **menganalisis pola belajar siswa** di platform pembelajaran online Dicoding. Sistem ini menggunakan **3 model ML** yang bekerja sama untuk memberikan insight personal kepada setiap siswa.
+Project ini adalah sistem Machine Learning untuk **menganalisis pola belajar siswa** di platform pembelajaran online Dicoding. Sistem ini menggunakan **2 model ML aktif** yang bekerja sama untuk memberikan insight personal kepada setiap siswa.
 
 ### Problem yang Diselesaikan:
 
-1. **Siswa tidak tahu tipe belajar mereka** → Model 1 mengklasifikasikan ke 5 persona
-2. **Siswa butuh motivasi & saran** → Model 2 generate saran personal dengan AI
+1. ~~**Siswa tidak tahu tipe belajar mereka** → Model 1 mengklasifikasikan ke 5 persona~~ *(Tidak aktif)*
+2. **Siswa butuh motivasi & saran** → Model 2 generate saran personal dengan AI (OpenRouter Mistral)
 3. **Siswa tidak tahu progress mereka** → Model 3 analisis kecepatan belajar
 
 ### Output untuk Website:
 
-- **Dashboard Siswa:** Label persona + saran belajar AI
+- **Dashboard Siswa:** Saran belajar AI
 - **Card Course:** Badge kecepatan belajar
 - **Insight Panel:** Perbandingan dengan siswa lain
 
@@ -44,35 +44,25 @@ Project ini adalah sistem Machine Learning untuk **menganalisis pola belajar sis
 
 ## ✨ Fitur Utama
 
-### 🎭 Model 1: Persona Classification
-**"Kamu Tipe Pembelajar Apa?"**
+### ~~🎭 Model 1: Persona Classification~~ *(TIDAK AKTIF)*
+> ⚠️ **Model ini tidak lagi digunakan dalam produksi.**
 
-Mengklasifikasikan siswa ke **5 tipe persona** berdasarkan aktivitas belajar menggunakan **Random Forest Classifier**:
-
-| Class | Persona | Deskripsi | Kriteria |
-|-------|---------|-----------|----------|
-| 0 | 📊 **The Consistent** | Steady Learner | `study_consistency_std` rendah |
-| 1 | 🔍 **The Deep Diver** | Slow but Thorough | `completion_speed` tinggi + `avg_exam_score` tinggi |
-| 2 | 🦉 **The Night Owl** | Night-time Learner | `avg_study_hour >= 19 OR < 6` |
-| 3 | 🚀 **The Sprinter** | Fast Learner | `completion_speed` rendah + `avg_exam_score` tinggi |
-| 4 | 💪 **The Struggler** | Need Support | `avg_exam_score` rendah + `submission_fail_rate` tinggi |
-
-**Use Case:** Label di dashboard user - "Kamu adalah The Night Owl!"
+~~Mengklasifikasikan siswa ke **5 tipe persona** berdasarkan aktivitas belajar menggunakan **Random Forest Classifier**~~
 
 ---
 
 ### 💬 Model 2: Personalized Advice
 **"Saran Personal Pakai AI"**
 
-Generate saran belajar menggunakan **Google Gemini AI** yang:
+Generate saran belajar menggunakan **OpenRouter API** dengan model **Mistral AI (devstral-2512:free)** yang:
 - ✅ Personal (menyapa dengan nama)
-- ✅ Empatik (memahami kondisi siswa berdasarkan persona)
 - ✅ Context-aware (mempertimbangkan pace belajar)
 - ✅ Actionable (saran yang bisa diterapkan)
 - ✅ Motivasional (mendorong semangat)
+- ✅ **GRATIS** (menggunakan tier free OpenRouter)
 
 **Contoh Output:**
-> "Halo Budi Santoso! Sebagai Night Owl yang belajar dengan pace cepat, kamu punya potensi luar biasa! Kami sarankan untuk tetap jaga kesehatan dengan istirahat cukup dan gunakan teknik pomodoro untuk fokus optimal di malam hari. Terus eksplorasi topik-topik advanced!"
+> "Halo Budi Santoso! Sebagai fast learner, kamu punya potensi luar biasa! Kami sarankan untuk tetap jaga kesehatan dengan istirahat cukup dan gunakan teknik pomodoro untuk fokus optimal. Terus eksplorasi topik-topik advanced!"
 
 **Use Case:** Insight panel di dashboard siswa
 
@@ -115,31 +105,23 @@ Mengklasifikasikan **3 tipe pace belajar** menggunakan **Random Forest Classifie
 
 ---
 
-### 🎭 Model 1: Persona Classification - Data Sources
+### ~~🎭 Model 1: Persona Classification - Data Sources~~ *(TIDAK AKTIF)*
 
-**Fitur yang Dibutuhkan:**
-
-| Feature | Sumber Tabel | Kolom yang Digunakan | Perhitungan |
-|---------|--------------|----------------------|-------------|
-| `avg_study_hour` | `developer_journey_trackings` | `first_opened_at` | `AVG(HOUR(first_opened_at))` |
-| `study_consistency_std` | `developer_journey_trackings` | `first_opened_at` | Standard deviasi dari aktivitas harian |
-| `completion_speed` | `developer_journey_completions` + `developer_journeys` | `study_duration`, `hours_to_study` | `study_duration / hours_to_study` |
-| `avg_exam_score` | `exam_results` + `exam_registrations` | `score`, `examinees_id` | `AVG(score)` |
-| `submission_fail_rate` | `developer_journey_submissions` | `status`, `submitter_id` | `COUNT(failed) / COUNT(*)` |
-| `retry_count` | `developer_journey_completions` | `enrolling_times` | `SUM(enrolling_times - 1)` |
+> ⚠️ Model ini tidak lagi digunakan.
 
 ---
 
 ### 💬 Model 2: Advice Generation - Data Sources
+
+**API yang Digunakan:** OpenRouter dengan model `mistralai/devstral-2512:free`
 
 **Fitur yang Dibutuhkan:**
 
 | Feature | Sumber | Deskripsi |
 |---------|--------|-----------|
 | `name` | `users.name` | Nama siswa untuk personalisasi |
-| `persona_label` | Output Model 1 | Tipe persona dari prediksi |
 | `pace_label` | Output Model 3 | Kecepatan belajar dari prediksi |
-| `avg_exam_score` | Sama seperti Model 1 | Rata-rata nilai ujian |
+| `avg_exam_score` | `exam_results` | Rata-rata nilai ujian |
 | `course_name` | `developer_journeys.name` | Nama learning path |
 
 ---
@@ -270,10 +252,10 @@ pip install -r requirements.txt
 copy .env.example .env
 
 # Edit .env dan tambahkan:
-# GEMINI_API_KEY=your_key_here
+# OPENROUTER_API_KEY=your_key_here
 ```
 
-Dapatkan API key dari: https://makersuite.google.com/app/apikey
+Dapatkan API key dari: https://openrouter.ai/keys
 
 **Catatan:** Tanpa API key, Model 2 akan pakai template sederhana (tetap jalan).
 
@@ -287,11 +269,10 @@ python main.py
 Output jika berhasil:
 ```
 ============================================================
-🚀 Starting AI Learning Insight API v1.1.0...
+🚀 Starting AI Learning Insight API v1.3.0...
 ============================================================
-[OK] Classification model loaded from models/persona_classifier.pkl
 [OK] Pace classification model loaded from models/pace_classifier.pkl
-[OK] Gemini AI configured
+[OK] OpenRouter (Mistral AI) configured
 ✅ All models loaded successfully!
 📝 API Documentation: http://localhost:8000/docs
 ============================================================
@@ -315,30 +296,31 @@ Output:
 
 ### API Endpoints:
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/health` | Health check |
-| POST | `/api/v1/persona/predict` | **Model 1:** Prediksi persona |
-| POST | `/api/v1/advice/generate` | **Model 2:** Generate saran AI |
-| POST | `/api/v1/pace/analyze` | **Model 3:** Analisis pace |
-| GET | `/api/v1/insights/{user_id}` | **Combined:** Semua model sekaligus |
+| Method | Endpoint | Description | Status |
+|--------|----------|-------------|--------|
+| GET | `/health` | Health check | ✅ Aktif |
+| POST | `/api/v1/persona/predict` | ~~Model 1: Prediksi persona~~ | ❌ Tidak Aktif |
+| POST | `/api/v1/advice/generate` | **Model 2:** Generate saran AI (Mistral) | ✅ Aktif |
+| POST | `/api/v1/pace/analyze` | **Model 3:** Analisis pace | ✅ Aktif |
+| GET | `/api/v1/insights/{user_id}` | **Combined:** Model 2 + 3 | ✅ Aktif |
 
-### Example: Persona Prediction
+### Example: Pace Analysis (Model 3)
 
 **Request:**
 ```bash
-POST /api/v1/persona/predict
+POST /api/v1/pace/analyze
 Content-Type: application/json
 
 {
   "user_id": 123,
+  "journey_id": 45,
+  "journey_name": "Belajar Machine Learning",
   "features": {
-    "avg_study_hour": 21.5,
-    "study_consistency_std": 2.3,
     "completion_speed": 0.35,
-    "avg_exam_score": 78.5,
-    "submission_fail_rate": 0.15,
-    "retry_count": 1
+    "study_consistency_std": 25.0,
+    "avg_study_hour": 14.0,
+    "completed_modules": 15,
+    "total_modules_viewed": 20
   }
 }
 ```
@@ -347,15 +329,10 @@ Content-Type: application/json
 ```json
 {
   "user_id": 123,
-  "persona_label": "The Night Owl",
-  "cluster_id": 2,
+  "journey_id": 45,
+  "pace_label": "fast learner",
   "confidence": 0.85,
-  "description": "Night-time Learner - Aktif belajar di malam hari",
-  "characteristics": [
-    "Mayoritas aktivitas belajar di jam 19:00 - 24:00",
-    "Konsistensi belajar cukup baik",
-    "Produktif di waktu malam"
-  ]
+  "insight": "Kamu belajar dengan cepat dan efisien! 🚀"
 }
 ```
 
@@ -461,12 +438,13 @@ Frontend → Backend → ML API → Response → Backend → Frontend
 
 ## 📊 Model Performance
 
-| Model | Metrik | Score | Tipe |
-|-------|--------|-------|------|
-| Model 1 (Persona) | Accuracy | ~85% | Classification (Random Forest) |
-| Model 3 (Pace) | Accuracy | ~90% | Classification (Random Forest) |
-| API Response Time (Model 1 & 3) | Latency | ~50-100ms | - |
-| API Response Time (Model 2 with Gemini) | Latency | ~1-3 detik | - |
+| Model | Metrik | Score | Tipe | Status |
+|-------|--------|-------|------|--------|
+| ~~Model 1 (Persona)~~ | ~~Accuracy~~ | ~~85%~~ | ~~Classification~~ | ❌ Tidak Aktif |
+| Model 2 (Advice) | API Provider | OpenRouter | Mistral AI (devstral-2512:free) | ✅ Aktif |
+| Model 3 (Pace) | Accuracy | ~90% | Classification (Random Forest) | ✅ Aktif |
+| API Response Time (Model 3) | Latency | ~50-100ms | - | - |
+| API Response Time (Model 2 with OpenRouter) | Latency | ~1-3 detik | - | - |
 
 ---
 
@@ -475,12 +453,15 @@ Frontend → Backend → ML API → Response → Backend → Frontend
 ### Q: Apakah API harus connect ke database?
 **A:** TIDAK! Backend yang query database dan hitung fitur. API hanya terima request dengan fitur yang sudah dihitung.
 
-### Q: Bagaimana cara dapat API key Gemini?
+### Q: Bagaimana cara dapat API key OpenRouter?
 **A:** 
-1. Buka https://makersuite.google.com/app/apikey
-2. Login dengan Google
+1. Buka https://openrouter.ai/keys
+2. Login/Register
 3. Create API key
-4. Copy ke file `.env`
+4. Copy ke file `.env` sebagai `OPENROUTER_API_KEY`
+
+### Q: Kenapa Model 1 (Persona) tidak aktif?
+**A:** Saat ini fokus pengembangan pada Model 2 (Advice) dan Model 3 (Pace). Model 1 mungkin diaktifkan kembali di versi mendatang.
 
 ### Q: Response ada nilai null?
 **A:** Pastikan mengirim semua fitur yang diperlukan di request. Lihat dokumentasi API untuk format lengkap.
@@ -491,22 +472,22 @@ Frontend → Backend → ML API → Response → Backend → Frontend
 ### Q: Port 8000 sudah dipakai?
 **A:** Edit di `main.py` → `uvicorn.run(..., port=8001)`, lalu restart.
 
-### Q: Apa bedanya Classification dan Clustering?
-**A:** 
-- **Clustering (lama):** Model unsupervised, mengelompokkan berdasarkan kemiripan
-- **Classification (baru):** Model supervised, memprediksi label berdasarkan training data yang sudah berlabel
-
 ---
 
 ## 📝 Changelog
 
+### v1.3.0 (2025-12-14)
+- ❌ **REMOVED: Model 1 (Persona Classification)** - Tidak lagi digunakan dalam produksi
+- ✅ **CHANGED: Model 2 dari Google Gemini → OpenRouter (Mistral AI devstral-2512:free)**
+- ✅ Model 3 (Pace Classification) tetap aktif
+- ✅ Updated: Semua dokumentasi disesuaikan
+
 ### v1.2.0 (2025-12-08)
-- ✅ **UPDATED: Model 1 & 3 dari Clustering → Classification**
-- ✅ Fixed: Mapping class persona sesuai LabelEncoder (0=Consistent, 1=Deep Diver, 2=Night Owl, 3=Sprinter, 4=Struggler)
-- ✅ Fixed: Mapping class pace sesuai LabelEncoder (0=Consistent, 1=Fast, 2=Reflective)
+- ✅ UPDATED: Model 1 & 3 dari Clustering → Classification
+- ✅ Fixed: Mapping class persona sesuai LabelEncoder
+- ✅ Fixed: Mapping class pace sesuai LabelEncoder
 - ✅ Added: Confidence score dari model Classification
 - ✅ Added: Database Sources & Features section
-- ✅ Updated: Dokumentasi lengkap
 
 ### v1.1.0 (2025-12-05)
 - ✅ Fixed: Pace analysis response null values
@@ -514,7 +495,6 @@ Frontend → Backend → ML API → Response → Backend → Frontend
 - ✅ Updated: 3 pace categories (fast/consistent/reflective)
 - ✅ Added: Support untuk fitur langsung di request
 - ✅ Added: `BACKEND_FEATURE_CALCULATION_GUIDE.md`
-- ✅ Improved: Advice generation dengan persona + pace context
 
 ### v1.0.0 (2025-12-02)
 - Initial release

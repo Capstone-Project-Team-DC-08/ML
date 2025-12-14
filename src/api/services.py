@@ -127,7 +127,7 @@ class AdviceService:
     }
     
     def __init__(self):
-        api_key = os.getenv("GEMINI_API_KEY", "")
+        api_key = os.getenv("OPENROUTER_API_KEY", "")
         self.client = OpenAI(
             base_url="https://openrouter.ai/api/v1",
             api_key=api_key
@@ -153,7 +153,7 @@ class AdviceService:
             )
             
             response = self.client.chat.completions.create(
-                model="google/gemini-2.0-flash-001",
+                model="mistralai/devstral-2512:free",
                 messages=[{"role": "user", "content": prompt}]
             )
             
@@ -164,105 +164,107 @@ class AdviceService:
     
     def _fallback_advice(self, name: str, pace_label: str, avg_score: float, 
                          progress: float, optimal_time: str) -> str:
-        """Fallback advice yang membangun"""
+        """Fallback advice - 5-6 kalimat"""
         
         pace_desc = self.PACE_DESC.get(pace_label, "belajar dengan baik")
         
         if avg_score < 60:
-            return f"Halo {name}, sebagai {pace_label} kamu {pace_desc}. Namun nilai quiz ({avg_score:.0f}) perlu ditingkatkan. Manfaatkan waktu belajar optimalmu di {optimal_time} untuk review materi lebih intensif."
+            return f"Hai {name}! 🌟 Senang melihat kamu terus berusaha dalam perjalanan belajarmu. Sebagai {pace_label}, kamu {pace_desc}. Nilai quiz ({avg_score:.0f}) masih bisa ditingkatkan - coba teknik active recall dan buat mind map untuk konsep penting. Waktu {optimal_time} adalah golden hour-mu, manfaatkan untuk review materi! Semangat terus, {name}! 💪"
         
-        if progress < 30:
-            return f"Halo {name}, kamu adalah {pace_label} yang {pace_desc}. Progress ({progress:.0f}%) masih bisa ditingkatkan. Coba konsisten belajar di waktu {optimal_time} yang merupakan waktu terbaikmu."
+        if progress < 30 and progress > 0:
+            return f"Hai {name}! 🚀 Setiap perjalanan dimulai dari langkah pertama! Sebagai {pace_label}, kamu {pace_desc}. Progress {progress:.0f}% adalah awal yang bagus - tetapkan target 1-2 modul per hari. Waktu {optimal_time} adalah saat terbaikmu untuk fokus. Terus konsisten, {name}! 💪"
         
         if pace_label == "fast learner":
-            return f"Halo {name}! Sebagai fast learner, kamu {pace_desc}. Waktu belajar optimalmu adalah {optimal_time}. Tantang dirimu dengan materi yang lebih kompleks!"
+            return f"Hai {name}! 🚀 Keren banget! Sebagai fast learner, kamu {pace_desc}. Saatnya naik level - explore materi advanced atau bantu teman belajar. Waktu {optimal_time} adalah golden hour-mu untuk deep work. Keep pushing, {name}! 💪✨"
+        
         elif pace_label == "reflective learner":
-            return f"Halo {name}! Sebagai reflective learner, kamu {pace_desc}. Waktu {optimal_time} adalah saat terbaikmu untuk deep learning. Tetap jaga ritme ini!"
-        else:
-            return f"Halo {name}! Sebagai consistent learner, kamu {pace_desc}. Pertahankan rutinitas belajar di waktu {optimal_time}!"
+            return f"Hai {name}! 💡 Luar biasa! Sebagai reflective learner, kamu {pace_desc}. Maksimalkan ini dengan mind mapping dan journal refleksi setelah belajar. Waktu {optimal_time} sangat cocok untuk deep learning-mu. Terus pertahankan, {name}! 🌟✨"
+        
+        else:  # consistent learner
+            return f"Hai {name}! 📊 Konsistensi adalah kuncimu! Sebagai consistent learner, kamu {pace_desc}. Coba teknik time-blocking dan set milestone mingguan untuk tracking. Waktu {optimal_time} sudah jadi sweet spot-mu - pertahankan! Keep inspiring, {name}! 💪🌟"
     
     def _build_prompt(self, name: str, pace_label: str, avg_score: float,
                       completed_modules: int, total_modules: int,
                       completion_speed: float, consistency_std: float,
                       total_courses: int, courses_completed: int,
                       optimal_time: str) -> str:
-        """Build prompt untuk saran umum yang membangun"""
+        """Build prompt untuk saran yang engaging dan actionable"""
         
         progress = (completed_modules / total_modules * 100) if total_modules > 0 else 0
         course_completion = (courses_completed / total_courses * 100) if total_courses > 0 else 0
         pace_desc = self.PACE_DESC.get(pace_label, "belajar dengan baik")
         
-        # Analisis kondisi
-        observations = []
-        suggestions = []
+        # Determine strengths and areas for growth
+        strengths = []
+        growth_areas = []
         
-        # Nilai
+        # Score analysis
         if avg_score >= 85:
-            observations.append(f"nilai quiz sangat baik ({avg_score:.0f})")
+            strengths.append(f"nilai quiz impresif ({avg_score:.0f}/100)")
         elif avg_score >= 70:
-            observations.append(f"nilai quiz baik ({avg_score:.0f})")
+            strengths.append(f"nilai quiz solid ({avg_score:.0f}/100)")
         elif avg_score >= 50:
-            observations.append(f"nilai quiz perlu ditingkatkan ({avg_score:.0f})")
-            suggestions.append("review materi sebelum mengerjakan quiz")
+            growth_areas.append("tingkatkan nilai quiz dengan review materi")
         else:
-            observations.append(f"nilai quiz masih rendah ({avg_score:.0f})")
-            suggestions.append("fokus perkuat pemahaman dasar sebelum lanjut ke materi berikutnya")
+            growth_areas.append("perkuat fondasi dengan review materi dasar")
         
-        # Progress
+        # Progress analysis
         if progress >= 70:
-            observations.append(f"progress belajar sangat baik ({progress:.0f}%)")
+            strengths.append(f"progress luar biasa ({progress:.0f}%)")
         elif progress >= 40:
-            observations.append(f"progress belajar cukup ({progress:.0f}%)")
-        else:
-            observations.append(f"progress masih perlu ditingkatkan ({progress:.0f}%)")
-            suggestions.append(f"luangkan waktu belajar rutin di {optimal_time}")
+            strengths.append(f"progress konsisten ({progress:.0f}%)")
+        elif progress > 0:
+            growth_areas.append("tingkatkan frekuensi belajar")
         
-        # Konsistensi
+        # Consistency analysis
         if consistency_std < 2:
-            observations.append("jam belajar sangat konsisten")
+            strengths.append("jadwal belajar sangat konsisten")
         elif consistency_std > 5:
-            observations.append("jam belajar kurang konsisten")
-            suggestions.append(f"coba tetapkan jadwal tetap di {optimal_time}")
+            growth_areas.append(f"tetapkan jadwal rutin di {optimal_time}")
         
-        # Kecepatan berdasarkan pace
-        if pace_label == "fast learner" and completion_speed < 0.6:
-            observations.append("kecepatan belajar sesuai dengan tipe fast learner")
-        elif pace_label == "reflective learner" and completion_speed > 1.3:
-            observations.append("tempo belajar sesuai dengan tipe reflective learner")
-        elif pace_label == "consistent learner":
-            observations.append("ritme belajar stabil")
+        # Course completion
+        if courses_completed > 0:
+            strengths.append(f"{courses_completed} kelas selesai")
         
-        observations_text = ", ".join(observations) if observations else "data masih terbatas"
-        suggestions_text = "; ".join(suggestions) if suggestions else "pertahankan pola belajar saat ini"
+        # Build context strings
+        strengths_text = ", ".join(strengths) if strengths else "potensi besar"
+        growth_text = "; ".join(growth_areas) if growth_areas else "pertahankan performa"
         
-        return f"""Kamu adalah learning coach yang memberikan saran MEMBANGUN untuk siswa.
+        # Pace-specific emoji and tips
+        pace_config = {
+            "fast learner": {"emoji": "🚀", "tip": "explore materi advanced"},
+            "consistent learner": {"emoji": "📊", "tip": "jaga ritme belajar"},
+            "reflective learner": {"emoji": "💡", "tip": "gunakan mind mapping"}
+        }
+        config = pace_config.get(pace_label, {"emoji": "✨", "tip": "terus semangat"})
+        
+        return f"""Kamu adalah learning coach yang hangat dan suportif. Berikan saran belajar personal.
 
 PROFIL SISWA:
 - Nama: {name}
-- Tipe Pace: {pace_label} ({pace_desc})
-- Waktu Belajar Optimal: {optimal_time}
+- Tipe: {pace_label} {config['emoji']} ({pace_desc})
+- Waktu Optimal: {optimal_time}
+- Progress: {completed_modules}/{total_modules} modul ({progress:.0f}%)
+- Nilai Quiz: {avg_score:.0f}/100
+- Kelas Selesai: {courses_completed}/{total_courses}
 
-STATISTIK KESELURUHAN:
-- Total kelas diikuti: {total_courses} kelas
-- Kelas selesai: {courses_completed} ({course_completion:.0f}%)
-- Total modul dipelajari: {completed_modules}/{total_modules} ({progress:.0f}%)
-- Rata-rata nilai quiz: {avg_score:.1f}/100
-- Kecepatan belajar: {completion_speed:.2f} (< 0.55 = cepat, > 1.5 = reflektif)
-- Konsistensi waktu: {consistency_std:.1f} (< 2 = sangat konsisten)
+KELEBIHAN: {strengths_text}
+PENGEMBANGAN: {growth_text}
 
-OBSERVASI: {observations_text}
-SARAN POTENSIAL: {suggestions_text}
+BUAT SARAN (5-6 kalimat) DENGAN STRUKTUR:
+1. Sapa nama + apresiasi kelebihan (1 kalimat)
+2. Jelaskan tipe pace dengan positif (1 kalimat)  
+3. Berikan 2 tips praktis sesuai tipe: {config['tip']} (2 kalimat)
+4. Motivasi + waktu optimal {optimal_time} (1-2 kalimat)
 
-INSTRUKSI:
-1. Sapa dengan nama siswa
-2. Jelaskan tipe pace-nya dan apa artinya (1 kalimat)
-3. Sebutkan waktu belajar optimalnya
-4. Berikan 1-2 saran KONKRET dan MEMBANGUN berdasarkan data
-5. Jika ada yang perlu diperbaiki, sampaikan dengan cara yang memotivasi
-6. Akhiri dengan kalimat penyemangat yang singkat
-7. Maksimal 4-5 kalimat, Bahasa Indonesia yang natural
+ATURAN:
+- Bahasa Indonesia hangat, gunakan "kamu"
+- Sertakan 2-3 emoji
+- Fokus SOLUSI bukan masalah
+- Paragraf mengalir, JANGAN bullet points
 
-FOKUS: Berikan saran yang actionable dan sesuai dengan tipe pace siswa."""
+CONTOH:
+"Hai Budi! 🌟 Nilai 85 dan progress 70% kamu membanggakan! Sebagai fast learner, kamu cepat menyerap materi. Saatnya naik level - coba explore materi advanced atau bantu teman belajar. Waktu Pagi adalah golden hour-mu, manfaatkan untuk hasil maksimal! Terus melangkah, {name}! 💪" """
 
 
 # Singleton instances

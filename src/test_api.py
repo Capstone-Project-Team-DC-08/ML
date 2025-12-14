@@ -1,12 +1,13 @@
 """
-Test Script untuk AI Learning Insight API
+Test Script untuk Learning Pace API
 Script ini untuk testing semua endpoint API
-Run: python test_api.py
 
-UPDATED: Sesuai dengan perubahan Model 1 & 3 dari Clustering ke Classification
-- Model 1 (Persona): Classification dengan 5 persona
-- Model 2 (Advice): Gemini AI dengan integrasi persona + pace
+UPDATED: v2.0.0 (2025-12-14)
+- Model 1 (Persona): TIDAK AKTIF
+- Model 2 (Advice): OpenRouter (Mistral AI devstral-2512:free)
 - Model 3 (Pace): Classification dengan 3 pace labels
+
+Run: python test_api.py
 """
 
 import requests
@@ -63,17 +64,10 @@ def test_health_check():
         if response.status_code == 200:
             data = response.json()
             print_success(f"API Status: {data['status']}")
-            print_success(f"Version: {data['version']}")
+            print_success(f"Timestamp: {data['timestamp']}")
+            print_success(f"Model Loaded: {data['model_loaded']}")
             
-            # Check each model
-            models_status = data['models_loaded']
-            for model_name, status in models_status.items():
-                if status:
-                    print_success(f"{model_name}: Loaded")
-                else:
-                    print_warning(f"{model_name}: Not loaded")
-            
-            print_response(data, "Full Health Check Response")
+            print_response(data, "Health Check Response")
             return True
         else:
             print_error(f"Health check failed with status {response.status_code}")
@@ -99,6 +93,9 @@ def test_root_endpoint():
         if response.status_code == 200:
             data = response.json()
             print_success("Root endpoint accessible")
+            print_success(f"API Name: {data['name']}")
+            print_success(f"Version: {data['version']}")
+            print_success(f"Endpoints: {list(data['endpoints'].keys())}")
             print_response(data)
             return True
         else:
@@ -110,164 +107,25 @@ def test_root_endpoint():
         return False
 
 
-def test_persona_prediction():
-    """Test persona prediction endpoint (Model 1 - Classification)"""
-    print_header("Test 3: Persona Prediction (Model 1 - Classification)")
-    
-    try:
-        # Test data dengan features lengkap untuk Classification Model
-        # Features: avg_study_hour, study_consistency_std, completion_speed,
-        #           avg_exam_score, submission_fail_rate, retry_count
-        payload = {
-            "user_id": 123,
-            "features": {
-                "avg_study_hour": 21.5,
-                "study_consistency_std": 2.3,
-                "completion_speed": 0.35,
-                "avg_exam_score": 78.5,
-                "submission_fail_rate": 0.15,
-                "retry_count": 1
-            }
-        }
-        
-        print(f"Testing with user_id: {payload['user_id']}")
-        print(f"Features: avg_study_hour={payload['features']['avg_study_hour']}, avg_exam_score={payload['features']['avg_exam_score']}")
-        
-        response = requests.post(
-            f"{API_BASE_URL}/api/v1/persona/predict",
-            json=payload,
-            timeout=10
-        )
-        
-        if response.status_code == 200:
-            data = response.json()
-            print_success(f"Persona: {data['persona_label']}")
-            print_success(f"Cluster ID: {data['cluster_id']}")
-            print_success(f"Confidence: {data['confidence']}")
-            if 'description' in data:
-                print_success(f"Description: {data['description']}")
-            print_success(f"Characteristics: {len(data['characteristics'])} items")
-            
-            print_response(data, "Persona Prediction Response")
-            return True
-        else:
-            print_error(f"Persona prediction failed with status {response.status_code}")
-            print_response(response.json(), "Error Response")
-            return False
-            
-    except Exception as e:
-        print_error(f"Error: {str(e)}")
-        return False
-
-
-def test_batch_persona():
-    """Test batch persona prediction"""
-    print_header("Test 4: Batch Persona Prediction")
-    
-    try:
-        payload = {
-            "user_ids": [123, 456, 789]
-        }
-        
-        print(f"Testing with {len(payload['user_ids'])} users")
-        
-        response = requests.post(
-            f"{API_BASE_URL}/api/v1/persona/batch",
-            json=payload,
-            timeout=15
-        )
-        
-        if response.status_code == 200:
-            data = response.json()
-            print_success(f"Processed {data['total_processed']} users")
-            
-            for result in data['results']:
-                print_success(f"  User {result['user_id']}: {result['persona_label']}")
-            
-            print_response(data, "Batch Persona Response")
-            return True
-        else:
-            print_error(f"Batch persona failed with status {response.status_code}")
-            return False
-            
-    except Exception as e:
-        print_error(f"Error: {str(e)}")
-        return False
-
-
-def test_advice_generation():
-    """Test advice generation endpoint (Model 2 - Gemini AI)"""
-    print_header("Test 5: Personalized Advice Generation (Model 2)")
-    
-    try:
-        # Updated payload dengan persona dan pace label
-        payload = {
-            "user_id": 123,
-            "name": "Budi Santoso",
-            "persona_label": "The Night Owl",
-            "pace_label": "fast learner",
-            "avg_exam_score": 78.5,
-            "course_name": "Belajar Machine Learning"
-        }
-        
-        print(f"Testing advice for: {payload['name']} (ID: {payload['user_id']})")
-        print(f"Persona: {payload['persona_label']}, Pace: {payload['pace_label']}")
-        print("Note: This may take 1-3 seconds if using Gemini AI...")
-        
-        response = requests.post(
-            f"{API_BASE_URL}/api/v1/advice/generate",
-            json=payload,
-            timeout=30  # Longer timeout untuk Gemini API
-        )
-        
-        if response.status_code == 200:
-            data = response.json()
-            print_success("Advice generated successfully")
-            print_success(f"Advice length: {len(data['advice_text'])} characters")
-            print_success(f"Persona context: {data['persona_context']}")
-            print_success(f"Pace context: {data['pace_context']}")
-            
-            print(f"\n{Colors.YELLOW}Generated Advice:{Colors.END}")
-            print(f"{Colors.GREEN}{data['advice_text']}{Colors.END}")
-            
-            print_response(data, "Full Advice Response")
-            return True
-        else:
-            print_error(f"Advice generation failed with status {response.status_code}")
-            print_response(response.json(), "Error Response")
-            return False
-            
-    except requests.exceptions.Timeout:
-        print_error("Request timeout. Gemini API might be slow or unavailable.")
-        print_warning("Check your GEMINI_API_KEY in .env file")
-        return False
-    except Exception as e:
-        print_error(f"Error: {str(e)}")
-        return False
-
-
 def test_pace_analysis():
     """Test pace analysis endpoint (Model 3 - Classification)"""
-    print_header("Test 6: Learning Pace Analysis (Model 3 - Classification)")
+    print_header("Test 3: Learning Pace Analysis (Model 3)")
     
     try:
-        # Updated payload dengan features untuk Classification Model
-        # Features: completion_speed, study_consistency_std, avg_study_hour,
-        #           completed_modules, total_modules_viewed
+        # Payload dengan 5 fitur untuk Pace Classification
         payload = {
             "user_id": 123,
-            "journey_id": 45,
             "features": {
                 "completion_speed": 0.3,
-                "study_consistency_std": 50.0,
+                "study_consistency_std": 25.0,
                 "avg_study_hour": 14.0,
                 "completed_modules": 50,
                 "total_modules_viewed": 60
             }
         }
         
-        print(f"Testing pace for user {payload['user_id']} on journey {payload['journey_id']}")
-        print(f"Features: completion_speed={payload['features']['completion_speed']}, completed_modules={payload['features']['completed_modules']}")
+        print(f"Testing pace for user {payload['user_id']}")
+        print(f"Features: completion_speed={payload['features']['completion_speed']}")
         
         response = requests.post(
             f"{API_BASE_URL}/api/v1/pace/analyze",
@@ -277,29 +135,10 @@ def test_pace_analysis():
         
         if response.status_code == 200:
             data = response.json()
-            print_success(f"Journey ID: {data.get('journey_id', 'N/A')}")
-            print_success(f"Journey Name: {data.get('journey_name', 'N/A')}")
+            print_success(f"User ID: {data['user_id']}")
             print_success(f"Pace Label: {data['pace_label']}")
-            
-            # Show confidence if available
-            if data.get('cluster_id') is not None:
-                print_success(f"Cluster ID: {data['cluster_id']}")
-            
-            if 'scores' in data and data['scores']:
-                print_success(f"Scores: fast={data['scores'].get('fast_score', 'N/A')}, consistent={data['scores'].get('consistent_score', 'N/A')}")
-            
-            if data.get('pace_percentage') is not None:
-                print_success(f"Pace Percentage: {data['pace_percentage']}%")
-            if data.get('user_duration_hours') is not None:
-                print_success(f"User Duration: {data['user_duration_hours']} hours")
-            if data.get('avg_duration_hours') is not None:
-                print_success(f"Avg Duration: {data['avg_duration_hours']} hours")
-            if data.get('percentile_rank') is not None:
-                print_success(f"Percentile Rank: {data['percentile_rank']}")
-            if 'insight' in data:
-                # Handle emoji for Windows
-                insight = data['insight'].encode('ascii', 'ignore').decode('ascii').strip()
-                print_success(f"Insight: {insight}")
+            print_success(f"Confidence: {data['confidence']}")
+            print_success(f"Insight: {data['insight']}")
             
             print_response(data, "Pace Analysis Response")
             return True
@@ -313,31 +152,45 @@ def test_pace_analysis():
         return False
 
 
-def test_pace_summary():
-    """Test pace summary endpoint"""
-    print_header("Test 7: Pace Summary")
+def test_pace_fast_learner():
+    """Test pace dengan data yang seharusnya menghasilkan fast learner"""
+    print_header("Test 4: Pace - Fast Learner Scenario")
     
     try:
-        user_id = 123
+        payload = {
+            "user_id": 456,
+            "features": {
+                "completion_speed": 0.3,  # < 0.55 = fast
+                "study_consistency_std": 15.0,
+                "avg_study_hour": 10.0,
+                "completed_modules": 80,
+                "total_modules_viewed": 90
+            }
+        }
         
-        response = requests.get(
-            f"{API_BASE_URL}/api/v1/pace/{user_id}/summary",
+        print(f"Testing fast learner scenario (completion_speed=0.3)")
+        
+        response = requests.post(
+            f"{API_BASE_URL}/api/v1/pace/analyze",
+            json=payload,
             timeout=10
         )
         
         if response.status_code == 200:
             data = response.json()
-            print_success(f"Total Courses: {data['total_courses_completed']}")
-            print_success(f"Dominant Pace: {data.get('dominant_pace_label', 'N/A')}")
-            if 'pace_distribution' in data:
-                print_success(f"Pace Distribution: {data['pace_distribution']}")
-            if 'insight' in data:
-                print_success(f"Insight: {data['insight']}")
+            expected = "fast learner"
+            actual = data['pace_label'].lower()
             
-            print_response(data, "Pace Summary Response")
+            if expected in actual:
+                print_success(f"Correct! Predicted: {data['pace_label']}")
+            else:
+                print_warning(f"Expected 'fast learner', got: {data['pace_label']}")
+            
+            print_success(f"Confidence: {data['confidence']}")
+            print_response(data, "Fast Learner Scenario Response")
             return True
         else:
-            print_error(f"Pace summary failed with status {response.status_code}")
+            print_error(f"Test failed with status {response.status_code}")
             return False
             
     except Exception as e:
@@ -345,34 +198,146 @@ def test_pace_summary():
         return False
 
 
-def test_complete_insights():
-    """Test complete insights endpoint (all models combined)"""
-    print_header("Test 8: Complete Insights (All Models)")
+def test_pace_reflective_learner():
+    """Test pace dengan data yang seharusnya menghasilkan reflective learner"""
+    print_header("Test 5: Pace - Reflective Learner Scenario")
     
     try:
-        user_id = 123
-        user_name = "Budi"
+        payload = {
+            "user_id": 789,
+            "features": {
+                "completion_speed": 2.0,  # > 1.5 = reflective
+                "study_consistency_std": 80.0,
+                "avg_study_hour": 22.0,
+                "completed_modules": 30,
+                "total_modules_viewed": 50
+            }
+        }
         
-        print(f"Getting complete insights for: {user_name} (ID: {user_id})")
-        print("This combines all 3 models, may take a few seconds...")
+        print(f"Testing reflective learner scenario (completion_speed=2.0)")
         
-        response = requests.get(
-            f"{API_BASE_URL}/api/v1/insights/{user_id}",
-            params={"user_name": user_name},
+        response = requests.post(
+            f"{API_BASE_URL}/api/v1/pace/analyze",
+            json=payload,
+            timeout=10
+        )
+        
+        if response.status_code == 200:
+            data = response.json()
+            expected = "reflective learner"
+            actual = data['pace_label'].lower()
+            
+            if expected in actual:
+                print_success(f"Correct! Predicted: {data['pace_label']}")
+            else:
+                print_warning(f"Expected 'reflective learner', got: {data['pace_label']}")
+            
+            print_success(f"Confidence: {data['confidence']}")
+            print_response(data, "Reflective Learner Scenario Response")
+            return True
+        else:
+            print_error(f"Test failed with status {response.status_code}")
+            return False
+            
+    except Exception as e:
+        print_error(f"Error: {str(e)}")
+        return False
+
+
+def test_advice_generation():
+    """Test advice generation endpoint (Model 2 - OpenRouter Mistral AI)"""
+    print_header("Test 6: Advice Generation (Model 2 - OpenRouter)")
+    
+    try:
+        # Payload lengkap untuk advice generation
+        payload = {
+            "user_id": 123,
+            "name": "Budi Santoso",
+            "pace_label": "fast learner",
+            "avg_exam_score": 85.0,
+            "completed_modules": 50,
+            "total_modules_viewed": 60,
+            "completion_speed": 0.4,
+            "study_consistency_std": 1.5,
+            "total_courses_enrolled": 5,
+            "courses_completed": 3,
+            "optimal_study_time": "Pagi"
+        }
+        
+        print(f"Testing advice for: {payload['name']} (ID: {payload['user_id']})")
+        print(f"Pace: {payload['pace_label']}, Score: {payload['avg_exam_score']}")
+        print("Note: This may take 1-3 seconds if using OpenRouter AI...")
+        
+        response = requests.post(
+            f"{API_BASE_URL}/api/v1/advice/generate",
+            json=payload,
             timeout=30
         )
         
         if response.status_code == 200:
             data = response.json()
-            print_success("Complete insights retrieved")
-            print_success(f"Persona: {data['persona']['label']}")
-            print_success(f"Pace: {data['learning_pace']['label']}")
-            print_success(f"Advice generated: {len(data['personalized_advice']['text'])} chars")
+            print_success("Advice generated successfully!")
+            print_success(f"User: {data['name']}")
+            print_success(f"Pace Context: {data['pace_context']}")
+            print_success(f"Advice length: {len(data['advice_text'])} characters")
             
-            print_response(data, "Complete Insights Response")
+            print(f"\n{Colors.YELLOW}Generated Advice:{Colors.END}")
+            print(f"{Colors.GREEN}{data['advice_text']}{Colors.END}")
+            
+            print_response(data, "Advice Response")
             return True
         else:
-            print_error(f"Complete insights failed with status {response.status_code}")
+            print_error(f"Advice generation failed with status {response.status_code}")
+            print_response(response.json(), "Error Response")
+            return False
+            
+    except requests.exceptions.Timeout:
+        print_error("Request timeout. OpenRouter API might be slow.")
+        print_warning("Check your OPENROUTER_API_KEY in .env file")
+        return False
+    except Exception as e:
+        print_error(f"Error: {str(e)}")
+        return False
+
+
+def test_advice_low_score():
+    """Test advice dengan skor rendah untuk lihat saran improvement"""
+    print_header("Test 7: Advice - Low Score Scenario")
+    
+    try:
+        payload = {
+            "user_id": 456,
+            "name": "Andi Wijaya",
+            "pace_label": "consistent learner",
+            "avg_exam_score": 55.0,
+            "completed_modules": 20,
+            "total_modules_viewed": 50,
+            "completion_speed": 0.9,
+            "study_consistency_std": 4.0,
+            "total_courses_enrolled": 3,
+            "courses_completed": 1,
+            "optimal_study_time": "Malam"
+        }
+        
+        print(f"Testing advice for low score scenario (score: {payload['avg_exam_score']})")
+        
+        response = requests.post(
+            f"{API_BASE_URL}/api/v1/advice/generate",
+            json=payload,
+            timeout=30
+        )
+        
+        if response.status_code == 200:
+            data = response.json()
+            print_success("Advice generated successfully!")
+            print_success(f"User: {data['name']}")
+            
+            print(f"\n{Colors.YELLOW}Generated Advice:{Colors.END}")
+            print(f"{Colors.GREEN}{data['advice_text']}{Colors.END}")
+            
+            return True
+        else:
+            print_error(f"Test failed with status {response.status_code}")
             return False
             
     except Exception as e:
@@ -382,7 +347,7 @@ def test_complete_insights():
 
 def test_swagger_docs():
     """Test if Swagger documentation is accessible"""
-    print_header("Test 9: API Documentation")
+    print_header("Test 8: API Documentation")
     
     try:
         response = requests.get(f"{API_BASE_URL}/docs", timeout=5)
@@ -404,8 +369,8 @@ def run_all_tests():
     """Run all tests"""
     print(f"\n{Colors.BLUE}")
     print("="*60)
-    print("  AI Learning Insight API - Test Suite")
-    print("  (Updated for Classification Models)")
+    print("  Learning Pace API - Test Suite v2.0.0")
+    print("  Model 2: OpenRouter (Mistral AI) + Model 3: Pace")
     print("="*60)
     print(f"{Colors.END}")
     print(f"Testing API at: {API_BASE_URL}")
@@ -414,12 +379,11 @@ def run_all_tests():
     tests = [
         ("Health Check", test_health_check),
         ("Root Endpoint", test_root_endpoint),
-        ("Persona Prediction (Classification)", test_persona_prediction),
-        ("Batch Persona", test_batch_persona),
-        ("Advice Generation (Gemini)", test_advice_generation),
-        ("Pace Analysis (Classification)", test_pace_analysis),
-        ("Pace Summary", test_pace_summary),
-        ("Complete Insights", test_complete_insights),
+        ("Pace Analysis", test_pace_analysis),
+        ("Pace - Fast Learner", test_pace_fast_learner),
+        ("Pace - Reflective Learner", test_pace_reflective_learner),
+        ("Advice Generation (OpenRouter)", test_advice_generation),
+        ("Advice - Low Score", test_advice_low_score),
         ("API Documentation", test_swagger_docs),
     ]
     
@@ -461,8 +425,9 @@ if __name__ == "__main__":
     # Intro
     print("\n" + "="*60)
     print("  Starting API Tests...")
-    print("  Model 1 & 3: Classification (Supervised)")
-    print("  Model 2: Advice Generation (Gemini AI)")
+    print("  Model 2: OpenRouter (Mistral AI devstral-2512:free)")
+    print("  Model 3: Pace Classification")
+    print("  Model 1: TIDAK AKTIF")
     print("="*60)
     print("\nMake sure the API server is running before testing!")
     print("To start server: cd src/api && python main.py\n")
